@@ -569,23 +569,306 @@ Spring Boot 文档的简要总览，相当于目录
       }
       ```
 
+      注意，使用构造器注入的方式使得 `riskAssessor` 属性标记为 `final` ，表明该属性在之后的使用过程中不可修改。
+
+   6. 使用 `@SpringBootApplication` 注解
+      很多 Spring Boot 开发者希望他们的应用能够使用自动配置，注解扫描，并且支持自定义配置类。`@SpringBootApplication` 注解可用来完成以上三个功能，分别是：
+
+      * `@EnableAutoConfiguration` ：支持 Spring Boot 自动配置机制
+      * `@ComponentScan`：支持扫描该注解所在的类所在的包下的类扫描
+      * `@Configuration`：允许在上下文注册额外的 beans 或者导入其他的配置类。
+
+      ```java
+      package com.example.myapplication;
       
+      import org.springframework.boot.SpringApplication;
+      import org.springframework.boot.autoconfigure.SpringBootApplication;
+      
+      @SpringBootApplication // same as @Configuration @EnableAutoConfiguration @ComponentScan
+      public class Application {
+      
+          public static void main(String[] args) {
+              SpringApplication.run(Application.class, args);
+          }
+      
+      }
+      ```
 
+      `@SpringBootAplication`注解源码
 
+      ```java
+      @SpringBootConfiguration
+      @EnableAutoConfiguration
+      @ComponentScan(
+          excludeFilters = {@Filter(
+          type = FilterType.CUSTOM,
+          classes = {TypeExcludeFilter.class}
+      ), @Filter(
+          type = FilterType.CUSTOM,
+          classes = {AutoConfigurationExcludeFilter.class}
+      )}
+      )
+      public @interface SpringBootApplication {
+      ...
+      }
+      ```
 
+      `@SpringBootApplication` 也提供别名去自定义 `@EnableAutoConfiguraion` 和 `@ComponentScan` 的属性
+      上面的这些特征都不是强制性的，你依旧可以使用 Spring Boot 支持的其他特性替换这些注解。比如，如果你不想使用 `@ComponentScan` 或者 注解的属性扫描是，你可以这样做：
 
+      ```java
+      package com.example.myapplication;
+      
+      import org.springframework.boot.SpringApplication;
+      import org.springframework.context.annotation.ComponentScan
+      import org.springframework.context.annotation.Configuration;
+      import org.springframework.context.annotation.Import;
+      
+      @Configuration(proxyBeanMethods = false)
+      @EnableAutoConfiguration
+      @Import({ MyConfig.class, MyAnotherConfig.class })
+      public class Application {
+      
+          public static void main(String[] args) {
+                  SpringApplication.run(Application.class, args);
+          }
+      
+      }
+      ```
 
+      在上面的这个例子中，`Application` 同其他 Spring Boot 应用一样，唯一不同的是不包括 `@Component-` 注解类和 `@ConfigurationProperties-` 注解类，并且通过 `@Import` 注解引入了用户自定义的 beans。
 
+   7. 运行程序
+      把程序打包成 jar 和 使用内嵌 HTTP 服务器的最大好处是你可以运行你的程序。调试 Spring Boot 程序也很简单。你甚至不需要任何特殊的 IDE 插件。
+      本节内容仅仅涵盖基于 jar 的打包。如果你打包为 war 的形式，你应该参数服务器或者 IDE 的文档。
 
+      1. 在 IDE 上运行
+         你可以以一个简单的 Java 应用的的方式在你的 IDE 上运行 Spring Boot 应用。首先，你需要导入你的项目，导入项目的步骤依赖于 I具体的 IDE 和 构建系统。大多数 IDEs 可以直接导入 Maven 项目。
 
+      2. 以打包的应用运行
+         如果你使用 Spring Boot Maven 或者 Gradle 创建一个可执行 jar，你可以使用 `java -jar` 的方式运行可执行程序， 如下的方式：
 
+         ```
+         $ java -jar target\myproject-1.0-SNAPSHOT.jar
+         ```
 
+         也支持远程调试的方式启动打包好的应用。
+
+         ```java
+         java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000
+         ,suspend=n -jar target\myproject-1.0-SNAPSHOT.jar
+         ```
+
+      3. 使用  Maven 插件
+         Spring Boot Maven 插件的 `run` 命令可以用来快速编译和运行你的应用。就像在 IDE 中运行一样的效果。如下案例展示 Maven 运行 Spring Boot 应用：
+
+         ```
+         mvn spring-boot:run
+         ```
+
+         你可以使用 `MAVEN_OPTS` 操作系统环境变量(Linux环境下适用)，如下：
+
+         ```
+         export MAVEN_OPTS=Xmx1024m
+         ```
+
+      4. 使用 Gradle 插件
+
+         ...
+
+      5. 热部署
+         由于 Spring Boot 应用是普通的 Java 应用，JVM 热部署是可以使用的。JVM 热部署一种受限的字节码替换技术，可以使用 JRebel 来提供完成的解决方案。
+         `spring-boot-devtools` 模块也提供程序快速重启的支持。
+
+   8. 开发者工具
+      Spring Boot 包含了大量的工具，这些工具将满足大多数开发者的需要。`spring-boot-devtools` 模块可以应用于任何项目中，提供热启动的功能。可通过在依赖中引入依赖使用该工具：
+      Maven
+
+      ```xml
+      <dependencies>
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-devtools</artifactId>
+              <optional>true</optional>
+          </dependency>
+      </dependencies>
+      ```
+
+      Gradle
+
+      ```groovy
+      dependencies {
+          developmentOnly("org.springframework.boot:spring-boot-devtools")
+      }
+      ```
+
+      开发者工具在运行一个大包号的程序时，将自动失效。如果你的应用以 `java -jar` 启动或者别一个特定的类加载器加载启动，那么该应用被认为是一个产品级应用。如果是其他方式启动（如通过容器方式启动），容器应该去掉 devtools 或者 设置 `-DSpring.devtools.restart.enabled=false` 系统属性。
+      在 Maven 使用 `optional` 标记依赖，在 Gredle 中使用 `developmentOnly` 配置，能够避免 devtools 在项目中的其他模快被传递使用。
+      默认情况下，重打包是不会包含 devtools，如果你往使用某个远程 devtools 特性，你需要手动加入。使用 Maven 插件打包是，设置 `excludeDevtools` 属性为 `false`。使用 Gradle 打包。。。
+
+      1. 默认属性
+         Spring Boot 支持的几个库都是使用缓存来提高性能的。比如，模板引擎缓存了编译好的模板，以避免重复的解析模板文件。同时，Spring MVC 在处理静态资源时会添加 HTTP 缓存头到响应中。
+         虽然缓存再生产环境下很有用，但在开发过程中可能会适得其反，因为他可能使你看不到你刚才做的修改。因此，`spring-boot-devtools` 默认取消了缓存支持。
+         缓存选项通常在配置文件 `application.properties` 中配置。比如，Thymeleaf 提供了 `sring.thymeleaf.cache` 属性。与其手动配置缓存相关属性，不如使用 `spring-boot-devtools` 模块自动配置适合开发环境的缓存配置。
+         在开发 Spring MVC 和 Spring WebFlux 应用时，你需要更多的关于 web 请求的信息，开发者工具能够为 web 日志组设置 `DEBUD` 日志级别。这样将提供更详细的请求信息，包括哪个处理器处理该请求，相应信息等内容。如果你希望日志记录所有请求的细节，你可以开启 `spring.mvc.log-request-details` 或者 `spring-codec.log-request-details` 配置属性。 
+         如果不希望使用 devtools 提供的默认配置，可以在 `application.properties` 文件中配置  `spring.devtools.add-properties`  `false`。
+         devtools 提供的属性列表，查看 [DevToolsPropertyDefaultsPostProcessor](https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot-devtools/src/main/java/org/springframework/boot/devtools/env/DevToolsPropertyDefaultsPostProcessor.java).
+
+      2. 自动重启
+         添加了 `spring-boot-devtools` 模块的应用当 classpath 下的文件发生变化时会自动重启。这在使用 IDE开发时很有用，能够很快的看到修改带来的变化。默认情况下，类路径下的文件夹下的文件都被监控着变化。注意某些资源，如静态资源和视图模板的变化，并不需要重启。
+         由于 DevTools 监控着类路径下的资源，触发一次重启的唯一方式就是更新类路径。而造成 classpath 更新的操作是依赖于 IDE 的。在 Eclipse 中，保存修改会造成类路径 更新，从而触发重启。在 Intellij 中，`build project` 会导致类路径更新，引发重启。
+
+          在使用 LiveReload 是自动重启很好用。
+         DevTools 重启时依赖于应用上下问的关机钩子函数关闭项目。如果你做了如下的设置重启功能将无法使用。
+
+         ```
+         SpringApplication.setRegisterShutdownHook(false)
+         ```
+
+         DevTools 自动忽略 classpath 下命名为 `spring-boot` `spring-boot-devtolls` `spring-boot-autoconfigure` `spring-boot-actuator` 和 `spring-boot-stater` 开头的项目的变化，也就是这些文件发生变化不会导致项目重启。
+         DevTools 需要自定义 `ResourceLoader`，该组件被 `ApplicationContext` 使用。如果你的应用已经提供了该组件，该组件将被包装。不支持直接覆盖 `ApplicationContext` 的 `getRessource` 方法。
+         **重启和重新加载**
+         Spring Boot 提供的 重启技术适用哦了两个类加载器。没有改变的类（如引入的第三方jars 中的类）使用 base 类加载器加载。自已写的类使用 restart 类加载器加载。当应用重启时，旧的 restart 类加载器取消使用，新建一个 restart 类加载器共偶作。这种方法意味着 应用重启快于一般的开启项目，因为 base 类加载器此时是可用的并且加在了部分类。
+         如果你发现重启并没有明显快于普通启动引用或者你遇到了类加载的问题，你可以尝试像是 JRebel 等重新载入技术。这类技术的原理是在类被载入是重写类完成。
+         **日志记录每次重启的变化**
+         默认情况下，你的应用每次重启，日志将记录一个条件评估变化的报告。该报告记录了你的变动，如添加或者删除 beans，设置配置属性，这些变动对自动配置造成的变动。
+         可以通过下面的方式取消变动报告日志：
+
+         ```
+         spring.devtools.restart.log-condition-evaluation-delta=false
+         ```
+
+         **排除一些资源**
+         某些资源发生变化时不需要触发重启。比如，Thymeleaf 模板文件。默认下，在 `/META-INF/maven` `/META-INF/resources` `/resources` `/static` `/public` `/templates` 路径下的文件都不触发重启，但是会触发动态重载。如果你想自定义这些排除项，你可以使用 `spring.devtools.restart.exclude` 属性。例如，可以通过下面的方式仅仅排除 `/static` `/public`
+
+         ```xml
+         spring.devtools.restart.exclude=static/**,public/**
+         ```
+
+         如果想在保持原来的默认的基础上添加配出的选项，使用 `spring.devtools.restart.additional-exclude` 属性
+
+         **监控另外的路径变化**
+         如果你想在你修改了非 classpath 下的文件是依旧可以重启应用，可以使用 `spring.devtools.restart.addititional-paths` 属性配置额外的被监控的路径变化。你可以使用 `spring.devtools.restart.exclude` 属性控制监控路径的文件是否触发重启或者重载。
+         **取消重启**
+         如果你不想使用重启功能，你可以通过配置 `spring.devtools.restart.enabled` 属性来取消重启。大多数情况下，你可以在你的 `application.properties` 文件中设置（但是这样做依旧会初始化一个 restart 类加载器，尽管 devtools 此时没有监控任何变动）
+         如果你需要完成取消 重启功能（比如在某些库冲突的情况下），你需要按照下面的方式，在调用 `SpringApplicaion.run()` 之前进行设置。
+
+         ```java
+         public static void main(String[] args) {
+             System.setProperty("spring.devtools.restart.enabled", "false");
+             SpringApplication.run(MyApp.class, args);
+         }
+         ```
+
+         **使用触发文件**
+         **自定义 restart 类加载器**
+
+         **已知的局限**
+         在使用 `ObjectInputStream` 反序列化对象是重启功能表现的并不好。如果你需要分序列化数据，你可以需要使用 Spring 的 `ConfigurationObjectInputStream` 和 `Thread.currentTrhead().getContextClassLoader()` 一起使用。
+
+      3. 动态重载
+         `spring-boot-devtools` 模块抱哈了一个内置的动态重载服务器，它在资源改变是可以被用来触发浏览器的刷新。该扩展插件可用于 Chrome，Firefox 和 Safari。
+         你可以使用 `spring.debtools.livereload.enabled` 属性设置为 false 来关闭该功能。
+         同时只能运行一个 LiveReload 服务器，如果你运行多个应用在 IDE 中，只有一个可使用 LiveReload 的服务。
+
+      4. 全局设置
+         你可以配置全局的 devtools 配置文件到 `$HOME/.confg/spring-boot` 文件夹：
+
+         1. `spring-boot-devtools.properties`
+         2. `spring-boot-devtools.yaml`
+         3. `spring-boot-devtools.yml`
+
+         文件中配置的属性将被用于你机器上的所有的 Spring Boot 应用。（同理，上面的这种方式还是适用于 linux 下的开发）
+         **配置文件系统监控器**
+
+      5. 远程应用
+         Spring Boot 开发者工具 不仅局限于本地开发，远程运行应用时仍然可以使用。远程支持可供选择，因为开启远程支持可能有安全风险。当运行在可信的网络或是使用 SSL 安全保障的环境下可以选择。另外，不要在生产环境部署时使用 开发者工具。
+         你可以通过下面的方式制定打包可执行文件时忽略开发者工具。
+         你需要设置 `spring.devtools.remote.secret`  属性，类似于密码。
+         DevTools 提供两方面的服务，接受连接的服务端和运行在你的 IDE 中的客户端应用。服务端组件在配置了 `spring.devtools.remote.secret` 后自动开启，客户端组件必须手动启动。
+         **运行远程客户应用**
+         **远程更新**
+
+   9. 打包应用
+      可执行 jar 包能够用于生产环境部署。由于他们是自容器的，他们也可以适用于基于云环境的部署。
+      生产级别的特性，如 监控、审计、REST 或者 JMX ，参考 Spring Boot Actuator 部分（本文档第5部分）。
+
+   10. 后续
+       目前为止，你应用了解了如何使用 Spring Boot 和一些最佳实践。接下来，你可以更深入的了解 Spring Boot 特性了
 
 
 
 ### 4、Spring Boot 特性
 
 更深入的讨论一些细节。这里你可以学到一些你可能需要使用或者自定制的核心特性。
+
+1. `SpringApplicaion` 类提供了一种方便的引导 Spring 应用的方式。大多数情况加，你可以委派给静态方法 `SpringApplication.run` ，如下面的案例：
+
+   ```java
+   public static void main(String[] args) {
+       SpringApplication.run(MySpringConfiguration.class, args);
+   }
+   ```
+
+   运行程序可以看到日志
+
+   ```javascript
+   
+     .   ____          _            __ _ _
+    /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+   ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+    \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+     '  |____| .__|_| |_|_| |_\__, | / / / /
+    =========|_|==============|___/=/_/_/_/
+    :: Spring Boot ::       (v2.1.11.RELEASE)
+   
+   2020-05-01 16:03:12.603  INFO 20220 --- [  restartedMain] cn.hust.study.springboot.Example         : Starting Example on DESKTOP-8IPKGHU with PID 20220 (G:\learn-skills\springbootstudy\myproject\target\classes started by Gknan in G:\learn-skills\springbootstudy)
+   2020-05-01 16:03:12.607  INFO 20220 --- [  restartedMain] cn.hust.study.springboot.Example         : No active profile set, falling back to default profiles: default
+   2020-05-01 16:03:12.693  INFO 20220 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+   2020-05-01 16:03:12.693  INFO 20220 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+   2020-05-01 16:03:14.662  INFO 20220 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+   ```
+
+   默认下，`INFO` 级别的日志打印出来，主要是一些相关的启动细节，如启动程序的用户。如果你需要其他级别的日志，可以自定义打印的日志级别。使用主应用程序类包中的实现版本来确定应用程序版本。可以通过 `spring.main.log-startup-info` 设置为 `false` 关闭启动应用的日志信息。这也会导致应用配置文件日志记录的关闭。
+
+   可以通过覆写 `SpringApplicaion` 的子类的 `logStartupInfo(boolean)` 方法添加新的日志信息。
+
+   1. 启动失败
+      如果你的应用启动失败，`FailureAnalyzers` 组件将展示错误信息并给出修改问题的方案。比如，如果你的 8080 端口已经被占用，此时你在 8080 端口启动应用， 你讲看到类似于下面的日志信息：
+
+      ```
+      ***************************
+      APPLICATION FAILED TO START
+      ***************************
+      
+      Description:
+      
+      Embedded servlet container failed to start. Port 8080 was already in use.
+      
+      Action:
+      
+      Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+      ```
+
+      Spring Boot 提供了大量的 `FailureAnalyzer` 实现类，当前你也可以自己[定制](https://docs.spring.io/spring-boot/docs/2.3.0.BUILD-SNAPSHOT/reference/htmlsingle/#howto-failure-analyzer)。
+
+      如果没有失败分析器可以处理异常，你仍然可以显示全部的信息以便于分析问题所在。所以你需要开启 `debug` 属性或者 允许 `DEBUG` 级别的日志记录，`org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener`.
+
+      例如，如果你使用 `jar -jar` 方法启动应用，你可以按照下面方式开启 `debug` 属性：
+
+      ```
+      java -jar myproject-1.0-SNAPSHOT.jar --debug
+      ```
+
+   2. 懒加载
+      `SpringApplicaion` 允许
+
+
+
+
+
+
+
 
 
 
