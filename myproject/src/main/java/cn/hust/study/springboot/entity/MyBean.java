@@ -2,7 +2,9 @@ package cn.hust.study.springboot.entity;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
+import org.springframework.core.env.CommandLinePropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

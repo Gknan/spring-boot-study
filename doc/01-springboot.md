@@ -959,7 +959,44 @@ Spring Boot 文档的简要总览，相当于目录
       在使用 JUnit 进行测试时，调用的是 `setWebApplicationType(WebAplicationType.NONE)`。
 
    8. 应用程序参数
-      如果你需要访问传递给 `SpringApplication.run(...)` 的参数，你可以注入一个 `org.springframework.boot.ApplicationArguments` bean。
+      如果你需要访问传递给 `SpringApplication.run(...)` 的参数，你可以注入一个 `org.springframework.boot.ApplicationArguments` bean。`ApplicationArguments` 接口提供了访问 String[] 类型的参数和 解析参数的功能，如下面的例子：
+
+      ```java
+      @Component
+      public class MyBean {
+      
+          @Autowired
+          public MyBean(ApplicationArguments arguments) {
+              boolean debug = arguments.containsOption("debug");
+              List<String> nonOptionArgs = arguments.getNonOptionArgs();
+              System.out.println(nonOptionArgs);
+              // 使用 --debug logfile.txt 参数运行  IDEA edit configurations -> Program
+              // arguments
+          }
+      }
+      ```
+
+      Spring Boot 还向 Spring 环境注册了 `CommandLinePropertySource`。这个 Bean 也能够让你通过 @Value 注解注入单个应用参数。
+
+   9. 使用 ApplicationRunner 或者 CommandLineRunner
+      如果在 `SpringApplication` 启动后，你需要运行一段代码，你可以实现 `ApplicationRunner` 或者 `CommandLinerRunner` 接口。两个接口工作方式相同，都提供了一个 `run` 方法，该方法在 `SpringApplication.run()` 完成前执行。
+
+      `CommandLineRunner` 接口字符数组的形式接收应用参数，而 `ApplicationRunner` 使用 `ApplicationArguments` 接口。下面例子展示了 `CommandRunner` 的使用：
+
+      ```java
+      @Component
+      public class MyBean2 implements CommandLineRunner {
+      
+          @Override
+          public void run(String... args) throws Exception {
+              System.out.println("CommandLineRunner run");
+          }
+      }
+      
+      ```
+
+      如果多个 `CommandLineRunner` 或者 `ApplicationRunner` beans 选哟按顺序执行，可再实现 `org.springframework.core.Ordered` 接口或者使用 `org.springframeword.core.annotation.Order` 注解。
+      
 
    
 
