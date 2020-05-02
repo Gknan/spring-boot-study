@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+# 自定义属性::
+name: zhangsan
+
 spring:
   application:
     name: myproject
@@ -16,10 +19,10 @@ spring:
 #      exclude: static/**, public/**
       # 保持默认的排除位置基础上添加排除
   # 关闭程序启动的日志
+  datasource:
+    driver-class-name:
 #  banner:
 #    location: META-INF/banner/banner.txt
 #  main:
 #    log-startup-info: false
 #      additional-exclude: static/**
-
-

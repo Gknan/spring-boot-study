@@ -1018,9 +1018,51 @@ Spring Boot 文档的简要总览，相当于目录
 
        `ExitCodeGenerator` 接口也可以在异常抛出时定制退出码。发生异常时，Spring Boot 将返回实现的 `getExitCode()` 方法返回的退出码。使用方式也是实现该接口。
 
+   11. 管理员功能
+       可以通过设置 `spring.application.admin.enabled` 属性为应用开启管理员相关的功能。将在 `MBeanServer` 平台上暴露 `SpringApplicationAdminMXBean` 。你可以使用这个功能远程管理 Spring Boot 引用。对于任何服务包装器实现，此功能也可能很有用。
+       如果你想知道应用程序在使用哪个端口，可以使用 `local.server.port` 属性获取。
+
+2. 外部化配置
+   Spring Boot 能够让你外部化配置你的应用，从而使得你的应用代码不变但是环境可变。你可以使用 properties 文件，yaml 文件，环境变量，命名行参数来外部化配置。属性文件中的值可以通过 `@Value` 直接注入到 beans 中，也可以通过 Spring 的环境抽象访问，或者通过 `@@ConfigurationProperties` 绑定到结构化对象上。
+   Spring Boo t使用一个非常特殊的 `PropertySource` 顺序，该顺序旨在允许合理地覆盖值。属性按照下面顺序使用：
+
+   1. 如果使用了 DevTools，先考虑 `$HOME/.config/spring-boot` 目录下的 DevTools 全局配置属性。
+   2. 测试类中的 [`@TestPropertySource`](https://docs.spring.io/spring/docs/5.2.5.RELEASE/javadoc-api/org/springframework/test/context/TestPropertySource.html) 注解的属性
+   3. `@SpringBootTest` 注解中的 `properties` 属性
+   4. 命令行出入的参数
+   5. `SPRING_APPLICATION_JSON` 中的属性
+   6. `ServletConfig` 的初始参数
+   7. `ServletContext` 的初始参数
+   8. 来自于 `java:comp/env`  的 JNDI 属性
+   9. Java 系统属性 （`System.getProperties()`）
+   10. 操作系统环境变量
+   11.  ``random.*` 中的 `RandomValuePropertySource`
+   12. 打包的 jar 之外的 profile-specific 应用属性 （`application-{profile}.properties` 和 YAML 变量）
+   13. 打包的 jar 里面的 profile-specific 应用属性 （`application-{profile}.properties` 和 YAML 变量）
+   14. 打包的 jar 之外的应用属性 （`applicatio.properties` 和 YAML 变量）
+   15. 打包的 jar 之内的应用属性 （`applicatio.properties` 和 YAML 变量）
+   16. `@Configuration` 类上的 `@PropertySource` 注解。注意，这样的属性资源在应用上下文被刷新之前不存在于环境 `Environment`中。这是由于若这些属性完成配置后再刷新应用上下文就会很慢，如 `logging.*` `spring.main.*` 都是刷新前不存在去环境中。
+   17. 默认属性（通过 `SpringApplication.setDefaultProperties` 设置）
+
+   假设你的 Component 使用了 name 属性，下面是案例：
+
+   ```java
+   @Component
+   @NoArgsConstructor
+   @AllArgsConstructor
+   @Data
+   public class MyBean4 {
+   
+       @Value("${name}")
+       private String name;
+   }
+   ```
+
+   你可以在应用程序 classpath 下创建 `application.properties` 问阿金，文件中提供 name 属性的值。当运行时，在你的 jar 包之前的 `application.properties` 文件提供的 name 属性会覆盖 name。你也可以使用 `jave -jar app.jar --name="Spring"` 来完成测试。
+
    
 
-
+ 
 
 
 

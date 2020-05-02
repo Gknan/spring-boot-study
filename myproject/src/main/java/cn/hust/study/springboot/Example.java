@@ -25,15 +25,15 @@ public class Example {
 
     public static void main(String[] args) {
 
-//        SpringApplication.run(Example.class, args);
+        SpringApplication.run(Example.class, args);
 //        CustomSpringApplication.run(Example.class, args);
 
         // 自定义 SpringApplication，实现关闭打印 Banner
-        SpringApplication application = new SpringApplication(Example.class);
-        application.setBannerMode(Banner.Mode.OFF);
+//        SpringApplication application = new SpringApplication(Example.class);
+//        application.setBannerMode(Banner.Mode.OFF);
 //        WebApplicationType webApplicationType = application.getWebApplicationType();
 //        System.out.println("实际使用的应用上下文类型：" + webApplicationType.getClass());
-        ConfigurableApplicationContext context = application.run(args);
+//        ConfigurableApplicationContext context = application.run(args);
 
         // 链式编程 API
 //        new SpringApplicationBuilder()
@@ -43,8 +43,8 @@ public class Example {
 
 
         // 自定义程序退出码
-        System.exit(SpringApplication.exit(context,
-                (MyExitCodeGenerator)context.getBean("myExitCodeGenerator")));
+//        System.exit(SpringApplication.exit(context,
+//                (MyExitCodeGenerator)context.getBean("myExitCodeGenerator")));
 
 
     }
