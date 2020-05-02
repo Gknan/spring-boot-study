@@ -4,6 +4,7 @@ server:
 # 自定义属性::
 name: zhangsan
 
+
 spring:
   application:
     name: myproject
@@ -26,3 +27,13 @@ spring:
 #  main:
 #    log-startup-info: false
 #      additional-exclude: static/**
+
+# 随机值
+my:
+  rval: ${random.value}
+  rint: ${random.int}
+  rlong: ${random.long}
+  ruuid: ${random.uuid}
+  rlessten: ${random.int(10)}
+  rrange: ${random.long()}
+#  rrange: ${random.int[1024, 65536]}
