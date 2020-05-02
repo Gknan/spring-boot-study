@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * 演示多个 CommandLineRunner 的执行顺序控制
  * 使用 @Order 注解
  */
-@Component
+//@Component
 @Order(value = 2)
 public class MyBean3 implements CommandLineRunner {
 

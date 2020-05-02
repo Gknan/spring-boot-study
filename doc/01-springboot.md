@@ -996,7 +996,27 @@ Spring Boot 文档的简要总览，相当于目录
       ```
 
       如果多个 `CommandLineRunner` 或者 `ApplicationRunner` beans 选哟按顺序执行，可再实现 `org.springframework.core.Ordered` 接口或者使用 `org.springframeword.core.annotation.Order` 注解。
-      
+
+   10. 应用退出
+       每个 `SpringApplication` 都向 JVM 注册了一个关闭的钩子函数以保证 在退出程序时`ApplicationContext` 可以优雅的关闭。Spring 的生命周期回调函数（如 `DisposableBean` 接口或者 `@PreDestroy` 注解）均可使用。
+       另外，如果 beans 在执行 `SpringApplication.exit()` 是希望返回特定的退出码，可以通过实现 `org.springframework.boot.ExitCodeGenerator` 接口完成。退出码可 传递给 `System.exit()` ，然后以状态码返回。下面是案例：
+
+       ```java
+       @Component
+       public class MyExitCodeGenerator implements ExitCodeGenerator {
+           @Override
+           public int getExitCode() {
+               return 30;
+           }
+       }
+       
+       
+               // 自定义程序退出码
+               System.exit(SpringApplication.exit(context,
+                       (MyExitCodeGenerator)context.getBean("myExitCodeGenerator")));
+       ```
+
+       `ExitCodeGenerator` 接口也可以在异常抛出时定制退出码。发生异常时，Spring Boot 将返回实现的 `getExitCode()` 方法返回的退出码。使用方式也是实现该接口。
 
    
 
