@@ -1,6 +1,7 @@
 package cn.hust.study.springboot.controller;
 
 import cn.hust.study.springboot.config.ListPropertiesConfig;
+import cn.hust.study.springboot.config.PasswordConfig;
 import cn.hust.study.springboot.entity.MyBean4;
 import cn.hust.study.springboot.entity.MyBean5;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,14 @@ public class MyController {
         for (String string: servers) stringBuilder.append(string + " ");
 
         return stringBuilder.toString();
+    }
+
+    @Autowired
+    private PasswordConfig passwordConfig;
+
+    @GetMapping("/getpwd")
+    public String getPasswd() {
+        return passwordConfig.getPasswd();
     }
 
 }

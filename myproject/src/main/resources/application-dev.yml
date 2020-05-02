@@ -1,0 +1,16 @@
+server:
+  port: 8000
+
+#
+spring:
+  security:
+    user:
+      password: "secret"
+# 这是嵌套 YAML 的写法，这种可以将多种 profile 环境写在一个 yml 文件中，通过 指定 profiles 字段选择；另外的方式是在问
+  配置文件名上添加 profile，比如 application-{profile}.yml，这两种方式不要一起使用，会导致混乱，比如这里就报错了
+#---
+#spring:
+#  profiles: "!test"
+#  security:
+#    user:
+#      password: "secret"

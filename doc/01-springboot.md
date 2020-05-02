@@ -1206,7 +1206,75 @@ Spring Boot 文档的简要总览，相当于目录
       }
       ```
 
-      
+      **在 Spring 环境中使用 YAML 作为 Properties**
+      `YamlPropertySourceLoader` 类可用来暴露 YAML 作为 Spring 环境中的 属性值源。
+      **多 profile YAML 配置文件**
+      你可以在一个文件中通过使用 `spring.profiles`主键指定 profile。
+
+      ```yaml
+      server:
+          address: 192.168.1.100
+      ---
+      spring:
+          profiles: development
+      server:
+          address: 127.0.0.1
+      ---
+      spring:
+          profiles: production & eu-central
+      server:
+          address: 192.168.1.120
+      ```
+
+      在上面的例子中，如果 `development` profile 被激活，`server.address` 属性就是 `127.0.0.1`。同样，如果 `production` 和 `eu-central` profiles 被激，服务器地址属性值就是  `192.168.1.120`。如果没有 profiles 被激活，服务器地址属性值为 `192.168.1.100`.
+      [spring profile](https://www.cnblogs.com/SummerinShire/p/6392242.html)
+
+      若应用上下文启动时，没有显式激活任何 profile，默认 profile 被激活。所以，在下面的例子中，我们 为`spring.security.user.password` 设置一个值，这个被这是的值仅仅在 默认 profile 下可用
+
+      ```yaml
+      server:
+        port: 8000
+      ---
+      spring:
+        profiles: default
+        security:
+          user:
+            password: weak
+      ```
+
+      但是，在下面的例子中，密码将会被永久设定。因为密码并没有和任何 profile 联系在一起，并且，在其他 profiles 中，密码将按照需要显示重置。
+
+      ```yaml
+      server:
+        port: 8000
+      spring:
+        security:
+          user:
+            password: weak
+      ```
+
+      使用 `spring.profiles` 元素指定的 profile 可通过 `！` 符号选择性的否定。如果否定的和非否定的 profile 定义在一个文件中，那么至少有一个非否定的 profile 必须能够匹配，否定 profile 可以没有匹配到。
+      **YAML 的缺点**
+      YAML 文件不能使用 `@PropertySource` 注解加载。
+
+      使用 多 YAML 语法在 YAML 文件中定义 profile 可能导致未意料的结果。比如，下面的配置：
+      application-dev.yml
+
+      ```yaml
+      server:
+        port: 8000
+      ---
+      spring:
+        profiles: "!test"
+        security:
+          user:
+            password: "secret"
+      ```
+
+      如果你使用参数 `--spring.profiles.active=dev` 启动程序，你期望的是 `spring.user.password` 被设置为 “secret”，但是结果并不是。
+      嵌套文档（--- 下面的部分）将被过滤，因为主文件是以 `application.yml` 命名的。由于改文件已经被当做是特定配置的，所以会忽略嵌套的文档
+
+      建议不要把 profile-specific YAML 文件和 多 YAML 文档混着用，只使用其中一种足够。
 
       
 
