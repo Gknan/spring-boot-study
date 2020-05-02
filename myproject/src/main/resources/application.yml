@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: myproject
+  # 开启懒加载
+#  main:
+#    lazy-initialization: true
   # 不使用 devtools 设置的一些默认皮遏制，如缓存关闭等
 #  devtools:
 #    add-properties: false
@@ -13,7 +16,10 @@ spring:
 #      exclude: static/**, public/**
       # 保持默认的排除位置基础上添加排除
   # 关闭程序启动的日志
+#  banner:
+#    location: META-INF/banner/banner.txt
 #  main:
 #    log-startup-info: false
 #      additional-exclude: static/**
+
 

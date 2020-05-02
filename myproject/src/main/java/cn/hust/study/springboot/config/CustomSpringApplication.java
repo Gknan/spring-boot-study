@@ -3,7 +3,7 @@ package cn.hust.study.springboot.config;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+//@Configuration
 public class CustomSpringApplication extends SpringApplication {
 
     @Override
