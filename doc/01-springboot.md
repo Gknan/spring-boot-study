@@ -1,6 +1,4 @@
-
-
-官网地址：https://docs.spring.io/spring-boot/docs/2.3.0.BUILD-SNAPSHOT/reference/htmlsingle/#boot-documentation
+官网地址：https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/
 
 
 
@@ -802,7 +800,8 @@ Spring Boot 文档的简要总览，相当于目录
 
 更深入的讨论一些细节。这里你可以学到一些你可能需要使用或者自定制的核心特性。
 
-1. `SpringApplicaion` 类提供了一种方便的引导 Spring 应用的方式。大多数情况加，你可以委派给静态方法 `SpringApplication.run` ，如下面的案例：
+1. SpringApplication
+   `SpringApplicaion` 类提供了一种方便的引导 Spring 应用的方式。大多数情况加，你可以委派给静态方法 `SpringApplication.run` ，如下面的案例：
 
    ```java
    public static void main(String[] args) {
@@ -861,7 +860,108 @@ Spring Boot 文档的简要总览，相当于目录
       ```
 
    2. 懒加载
-      `SpringApplicaion` 允许
+      `SpringApplicaion` 允许懒加载启动应用。启动懒加载后，bean 在需要时才被创建，而不是程序已启动就创建。所以，使用懒加载能够减少程序启动的时间。在 web 应用中，使用懒加载将导致 web 相关的 beans 直接 HTTP 请求到来时才创建。
+      懒加载的坏处是将延迟问题的暴露。如果一个 bean 配置错误，程序启动后并不会立即报错，而是等到该 bean 给初始化时才报错。同时我们也要关注 JVM 的内存应该是满足应用需要的所有的 beans 的内存，而不是程序刚启动时的 beans 的内存。综上，懒加载默认是不开启的，建议在开启懒加载前作为 JVM 堆内存的调整。
+      懒加载支持编程式指定，如使用 `SpirngApplicationBuilder` 的 `lazyInitialization` 方法或者 `SpringApplication` 的 `setLazyInitialization` 方法。也可以通过配置文件开启懒加载
+
+      ```properties
+      spring.main.lazy-initialization=true
+      ```
+
+      如果你想对于某些 beans 取消懒加载，而对于其他 beans 使用懒加载，你可以 `@Lazy(false)` 注解设置这些 beans 的懒加载属性为 false。
+
+   3. 自定义 banner(横幅，旗帜)
+      程序启动时的 banner 符号可以通过添加 `banner.txt` 文件到 classpath 下进行改变，或者可以通过设置 `spring.banner.location` 属性值为一个文件的路径。如果该文件不是 UTF-8 编码，你可以设置 `spring.banner.charset` 来指定。同时，你也可以添加 `banner.git` `banner.jpg` `banner.png` 文件到类路径下，或者设置 `spring.banner.image.location` 属性。图像会被转成 ASCII 表示。
+      在你的 `banner.txt` 文件中，你可以使用下面的占位符。
+
+      Table4 Banner 变量
+      。。。
+      你也可以使用 `spring.main.banner-mode` 属性配置 banner 是否需要打印到 `System.out` 上(console)，或者记录到机制(log)，或者在生产级别关闭(off)。
+      打印 Banner 使用的是 `SpringBootBanner` 的一个单例类。
+
+   4. 自定义 `SpringApplication`
+
+      可以通过创建一个`SpringApplication` 实例 ，然后来定制它。比如，可以通过下面的方式关闭打印 Banner。
+
+      ```java
+      
+          public static void main(String[] args) {
+              // 自定义 SpringApplication，实现关闭打印 Banner
+              SpringApplication application = new SpringApplication(Example.class);
+              application.setBannerMode(Banner.Mode.OFF);
+              application.run(args);
+      
+          }
+      ```
+
+      传递给 `SpringApplication` 的构造器参数是 Spring Beans 的配置源。在大多数情况下，它们是对`@Configuration`类的引用，但它们也可以是对XML配置或应扫描的程序包的引用。
+      可通过查看 `SpringApplication` 的 [Javadoc](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/api//org/springframework/boot/SpringApplication.html) 获取更多详细信息。
+
+   5. 链式编程 API
+      如果你需要构造一个 `ApplicationContext` 层次，或者你喜欢使用链式编程，你可以使用 `SpringApplicationBuilder`。
+      `SpringApplicationBuilder` 让你将多个的方法链在一起调用。如下案例：
+
+      ```java
+          public static void main(String[] args) {
+              // 链式编程 API
+              new SpringApplicationBuilder()
+                      .sources(Example.class)
+                      .bannerMode(Banner.Mode.OFF)
+                      .run(args);
+      
+      
+          }
+      ```
+
+      在创建 `ApplicationContext` 链时有一些限制。比如，web 组件必须包含于子上下文，父子上下文使用同样的 `Environment`。详见[`SpringApplicationBuilder` Javadoc](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/api//org/springframework/boot/builder/SpringApplicationBuilder.html) 。
+
+   6. 应用事件和监听器
+      除了通常使用的 Spring Framework 事件，如 `ContextRefreshEvent`,`SpringApplicaion` 还发送一些其他的应用程序事件。
+      有些事件实在 `ApplicationContext` 被创建之前就已经触发，因此你可以在这些事件上注册监听器，使之成为 `@Bean`。你可以通过 `SpringApplication.addListeners(...)` 方法或者 `SpringApplicationoBuilder.listeners(...)` 方法。
+      如果你要监听器自动注册而不官应用创建方式，你可以添加一个 `META-INF/spring.factories` 文件到项目中，并且使用 `org.springframework.context.ApplicationListner` 主键引用你的 监听器，如下案例：
+
+      ```properties
+      org.springframework.context.ApplicationListener=com.example.project.MyListener
+      ```
+
+      应用中事件按照下面的顺序发送，
+
+      1. 启动程序但是在除了监听器和初始化器的注册之外的其他任何部分执行之前，`ApplicationStartingEvent` 被发送。
+      2. 在上下文创建之前，上下文中将要使用的环境确定后，`ApplicationEnvironmentPreparedEvent` 被发送。
+      3. 在任何 bean 定义加载前，`ApplicationContext` 准备好并且 应用上下文初始化器被调用后，`ApplicationContextInitializedEvent` 被发送。
+      4. 在 refresh 开启前 bean 定义被加载后，`ApplicationPreparedEvent` 被发送。
+      5. 在上下文刷新后且任何应用或者命令行运行器调用之前，`ApplicationStartedEvent` 被发送。
+      6. 在任何应用或者运行期调用之后，`ApplicationReadyEvent` 被发送。此时，表明应用程序准备好接收请求了。
+      7. 若在启动过程中抛出异常 `ApplicationFailedEvent` 被触发。
+
+      上面仅仅列出了与 `SpringApplication` 绑定的 `SpringApplicationEvent` ，除此之外，下面的事件将会在 `ApplicationPreparedEvent` 之后 `ApplicationStartedEvent` 之前被触发：
+
+      1. 当`ApplicationContext` 准备好后，`ContextRefreshedEvent` 被触发。
+      2. 在 `WebServer` 准备好后，`WebServerInitializedEvent` 被触发。
+         `ServletWebServerInitializedEvent` 和 `ReactiveWebServerInitializedEvent` 分别是 servlet 和响应变量。
+
+      通常情况下，你并不需要使用应用事件，但是需要知道他们的存在。Spring Boot 使用事件监听处理大量的任务。
+
+      应用程序事件是通过使用Spring Framework的事件发布机制发送的。这个机制一定程度上保证了发布给子上下文监听器的事件将会被发布给祖先上下文的监听器。综上，如果你的程序使用了 `SpringApplication` 实例的层级结构，一个监听器可以收到同样类型的应用事件的多个实例。
+      为了使得监听器能够分辨一个事件是来自自己的上下文还是后弦的上下文，需要注入应用上下文，然后比较注入的上下文和事件的上下文。如果监听器是一个 bena，可以通过实现 `ApplicationContextAware ` 的方式或者使用 `@Autowired` 注解注入。
+
+   7. web 环境
+      `SpringApplication` 会试着创建合适的 `ApplicationContext` 。用来决定 `WebApplicationType` 的算法很简单，如下：
+
+      * 如果有 Spring MVC，将使用`AnnotationConfigServletWebServerApplicationContext` 。
+      * 若没有 Spring MVC，但是有 Spring WebFlux，将使用`AnnotationConfigReactiveWebServerApplicationContext`
+      * 以上都没有，将使用 `AnnotationConfigApplicationContext`
+
+      算法的思路是如果你应用中同时使用 Spring MVC 和 Spring WebFlux，Spring MVC 将默认优先使用。但是，你可以通过调用 `setWebAplicationType(WebApplicationType)` 覆盖，从而选择你想使用的应用类型。
+
+      也可以通过调用 `setApplicationContextClass(...)` 来选择应用上下文类型。
+
+      在使用 JUnit 进行测试时，调用的是 `setWebApplicationType(WebAplicationType.NONE)`。
+
+   8. 应用程序参数
+      如果你需要访问传递给 `SpringApplication.run(...)` 的参数，你可以注入一个 `org.springframework.boot.ApplicationArguments` bean。
+
+   
 
 
 
