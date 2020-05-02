@@ -3,6 +3,7 @@ package cn.hust.study.springboot.controller;
 import cn.hust.study.springboot.entity.MyBean4;
 import cn.hust.study.springboot.entity.MyBean5;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,14 @@ public class MyController {
     @GetMapping("/mybean5")
     public String testMyBean5() {
         return myBean5.toString();
+    }
+
+    @Value("${app.description}")
+    private String des;
+
+    @GetMapping("/placeholader")
+    public String testPalceHolder() {
+        return des;
     }
 
 }

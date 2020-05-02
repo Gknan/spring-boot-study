@@ -1,5 +1,5 @@
-server:
-  port: 9000
-
-# 自定义属性::
-name: zhangsan
+#server:
+#  port: 9000
+#
+## 自定义属性::
+#name: zhangsan

@@ -1125,6 +1125,21 @@ Spring Boot 文档的简要总览，相当于目录
       itional-location=classpath:\override.yml
       ```
 
+   4. 特定属性
+      除了 `application.properties` 文件，特定的配置属性也可以通过满足 `application-{profile}.properties` 命名约束的配置文件定义。应用环境中一些不发生变化的配置属性。就是说，如果没有显示激活任何概要 profiles 文件，那么只加载 `application-default.properties`文件。
+
+      特定配置文件的加载位置同 `application.properties`，且特定配置问文件总是覆盖非特定配置文件，而不管非特定文件是从哪个位置加载的。
+
+      如果定义了多个特定配置问阿金，则使用最后者覆盖前面策略。例如，如果 `spring.profiles.active` 属性在通过 `SpringApplication` API 配置之后加载，那么最终会保留特定属性文件中的属性值。
+      如果你使用 `spring.config.locations` 定义了配置文件，这些文件中的特定属性配置将不被考虑。如果你想使用特定配置属性，那么使用 `spring.config.locations` 配置文件夹。
+
+   5. 属性中的占位符
+      `application.properties` 中配置的值在使用前会经过应用环境过滤，所以你可以在文件中使用前部分定义的值。
+
+      ```properties
+      
+      ```
+
       
 
  
