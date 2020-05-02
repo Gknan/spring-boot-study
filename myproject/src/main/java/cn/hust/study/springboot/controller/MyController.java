@@ -1,11 +1,14 @@
 package cn.hust.study.springboot.controller;
 
+import cn.hust.study.springboot.config.ListPropertiesConfig;
 import cn.hust.study.springboot.entity.MyBean4;
 import cn.hust.study.springboot.entity.MyBean5;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class MyController {
@@ -42,6 +45,18 @@ public class MyController {
     @GetMapping("/placeholader")
     public String testPalceHolder() {
         return des;
+    }
+
+    @Autowired
+    private ListPropertiesConfig listPropertiesConfig;
+
+    @GetMapping("/listPro")
+    public String testListPro() {
+        List<String> servers = listPropertiesConfig.getServers();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String string: servers) stringBuilder.append(string + " ");
+
+        return stringBuilder.toString();
     }
 
 }

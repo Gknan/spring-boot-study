@@ -1137,8 +1137,76 @@ Spring Boot 文档的简要总览，相当于目录
       `application.properties` 中配置的值在使用前会经过应用环境过滤，所以你可以在文件中使用前部分定义的值。
 
       ```properties
-      
+      # 占位符
+      app:
+        name: MyApp
+        description: ${app.name} is a Spring Boot Application
       ```
+
+   6. 加密属性
+      Spring Boot 没有提供加密属性值的支持，他提供了修改 Spring 容器中的值的 钩子点。`EnvironmentPostProcessor` 接口允许你在应用启动前修改环境。更多细节[查看](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#howto-customize-the-environment-or-application-context)
+
+      如果你想安全存储证书和密码，[Spring Cloud Vault](https://cloud.spring.io/spring-cloud-vault/) 项目提供了相应的外部化配置支持。
+
+   7. 使用 YAML 替换 Properties
+      YAML 是 JSON 的超集，也是定义层级数据的一种遍历的格式。当你的 classpath 下有 SnakeYAML 库时，``SpringApplication` 默认自动支持 YAML 替代 Properties。
+
+      如果你使用 “Starters”，SnakeYAML 将由 `spring-boot-starter` 自动提供。
+      **载入 YAML**
+      Spring Boot 提供了两个类，用于载入 YAML 文件。 `YamlPropertiesFactoryBean` 载入 YAML 文件成 `Properties`，`YamlMapFactoryBean` 载入 YAML 文件为 `Map`。
+
+      比如：
+
+      ```yaml
+      environments:
+          dev:
+              url: https://dev.example.com
+              name: Developer Setup
+          prod:
+              url: https://another.example.com
+              name: My Cool App
+      ```
+
+      上面的 YAML 转为 Properties 文件形式为：
+
+      ```properties
+      environments.dev.url=https://dev.example.com
+      environments.dev.name=Developer Setup
+      environments.prod.url=https://another.example.com
+      environments.prod.name=My Cool App
+      ```
+
+      YAML 的列表格式为：
+
+      ```yaml
+      my:
+         servers:
+             - dev.example.com
+             - another.example.com
+      ```
+
+      列表对应的 properties 形式为：
+
+      ```properties
+      my.servers[0]=dev.example.com
+      my.servers[1]=another.example.com
+      ```
+
+      可通过下面的方式绑定列表属性：
+
+      ```java
+      @ConfigurationProperties(prefix="my")
+      public class Config {
+      
+          private List<String> servers = new ArrayList<String>();
+      
+          public List<String> getServers() {
+              return this.servers;
+          }
+      }
+      ```
+
+      
 
       
 

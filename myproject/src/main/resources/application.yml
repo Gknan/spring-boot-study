@@ -37,8 +37,12 @@ my:
   rlessten: ${random.int(10)}
   rrange: ${random.long()}
 #  rrange: ${random.int[1024, 65536]}
+  servers:
+    - dev.example.com
+    - another.example.com
 
 # 占位符
 app:
   name: MyApp
   description: ${app.name} is a Spring Boot Application
+
