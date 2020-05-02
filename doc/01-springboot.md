@@ -1060,7 +1060,72 @@ Spring Boot 文档的简要总览，相当于目录
 
    你可以在应用程序 classpath 下创建 `application.properties` 问阿金，文件中提供 name 属性的值。当运行时，在你的 jar 包之前的 `application.properties` 文件提供的 name 属性会覆盖 name。你也可以使用 `jave -jar app.jar --name="Spring"` 来完成测试。
 
-   
+   1. 随机值配置
+      `RandomValuePropertySource` 在注入随机值时很有用。可以注入整形、长整型、UUID或者字符串。下面是例子。
+
+      ```properties
+      my.secret=${random.value}
+      my.number=${random.int}
+      my.bignumber=${random.long}
+      my.uuid=${random.uuid}
+      my.number.less.than.ten=${random.int(10)}
+      # my.number.in.range=${random.int[1024,65536]} # 未通过
+      ```
+
+      
+
+   2. 接收命令行属性
+      默认下，`SpringApplication` 会将命令行的参数转换成属性并加入到 Spring 的运行环境中。命令行的属性优先级高于其他属性源的值。
+      可以通过 `SpringApplication.setAddCommandLineProperties(false)` 关闭命令行的参数。下面的方式启动应用，端口好就是 9000
+
+      ```java
+      java -jar target\myproject-1.0-SNAPSHOT.jar --server.port=9000 
+      ```
+
+   3. 应用属性文件
+      `SpringApplication` 会从 `application.properties` 文件中加载属性，该属性文件一般放在以下位置：
+
+      1. 当前文件下的 `/config` 子目录
+      2. 当前目录
+      3. classpath 下的 `config` 下，实际上赌赢的是 resource/config
+      4. classpath 的根目录
+
+      实际的优先级显示按照罗列的顺序（序号小的位置定义的属性文件会覆盖序号大的位置定义的属性）
+      实际工作中，可以使用 `.ynl` 文件替代 properties 文件
+
+      如果你不希望使用 `application.properties` 作为配置文件的名字，你可以通过声明 `spring.config.name` 环境变量的方式制定配置文件。或者可以通过 `spring.config.location` 环境属性制定配置文件的位置，下面展示了如何制定不同的文件名：
+
+      ```java
+      java -jar myproject.jar --spring.cofnig.name=myproject
+      ```
+
+      ```
+      java -jar myproject.jar --spring.config.location=classpath:/defaault.properties
+      ```
+
+      `spring.config.name` 和 `spring.config.location` 被用来制定哪个文件载入实在应用启动前，所以他们必须被定义为环境变量属性（操作系统环境变量，系统属性或者通过命令行指定）
+      `spring.config.location` 包含了文件夹，所以这些文件夹应用以 / 结尾。`spring.config.location`中指定的文件按原样使用，不支持特定于配置文件的变体，并且被任何特定于配置文件的属性覆盖。
+      配置位置按照逆序查找的。默认情况下，配置文件的位置和查找优先级是：
+
+      1. file:./config/
+      2. file:./
+      3. classpath:/config/
+      4. classpath:/
+
+      但通过 `spring.config.location` 使用自定义的配置文件位置时，定义的位置替换默认的位置。比如，如果`spring.config.location`  配置的值是  `classpath:/custom-config/,file=./custom-config/` ，查找顺序就变成：
+
+      1. `file:./custom-config/`
+      2. `classpath:custom-config/`
+
+      如果使用 `spring.config.additional-location` 添加配置文件位置，将在默认的基础上添加。查找时先找添加的配置文件的位置，然后找默认的位置。
+      查找顺序使得你可以把默认值定义在一个配置文件中，然后选择性在另外一个文件中进行覆盖。你可以在 `application.properties` 中定义默认的值，默认的值可能会被自定义的文件中（优先级高的配置文件）同名属性值覆盖掉。
+
+      ```sh
+      java -jar target\myproject-1.0-SNAPSHOT.jar --spring.config.add
+      itional-location=classpath:\override.yml
+      ```
+
+      
 
  
 
