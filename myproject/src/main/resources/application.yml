@@ -11,10 +11,32 @@ acme:
     roles:
       - USER
       - ADMIN
+  list:
+    - name: my name
+      description: my description
+  map:
+    key1:
+      name: my name 1
+      description: my description 1
 
+--- # 只能是三个线，不能多
 spring:
-  application:
-    name: myproject
+  profiles: dev
+#  application:
+#    name: myproject
+acme:
+  list:
+    - name: my another name
+  map:
+    key1:
+      name: dev name 1
+    key2:
+      name: dev name 2
+      description: dev description 2
+
+#spring:
+#  application:
+#    name: myproject
   # 开启懒加载
 #  main:
 #    lazy-initialization: true

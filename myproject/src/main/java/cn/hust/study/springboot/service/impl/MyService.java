@@ -20,7 +20,7 @@ public class MyService {
     }
 
     // 构造函数完成后执行
-    @PostConstruct
+//    @PostConstruct
     public void openConnection() {
 //        Server server = new Server(this.acmeProperties.getRemoteAddress());
         log.info("Get Remote Address from ConfiguraionProperties: {}, Securiy" +
@@ -28,5 +28,18 @@ public class MyService {
                 this.acmeProperties.getRemoteAddress(),
                 JSON.toJSONString(this.acmeProperties));
         // ...
+    }
+
+
+//    @PostConstruct
+    public void testList1() {
+        log.info("default mypojo list: {}",
+                JSON.toJSONString(acmeProperties.getList()));
+    }
+
+    @PostConstruct
+    public void testMap() {
+        log.info("AcmeProperties.map is: {}",
+                JSON.toJSONString(acmeProperties.getMap()));
     }
 }

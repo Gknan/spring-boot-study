@@ -1566,7 +1566,76 @@ Spring Boot 文档的简要总览，相当于目录
 
       例如，假设MyPojo对象的 `name` 和 `description` 属性默认为空。 下面的示例在 `AcmeProperties` 暴露一个 MyPojo对象的列表：
 
+      ```yaml
+      acme:
+        list:
+          - name: my name
+            description: my description
+      ---
+      spring:
+        profiles: dev
+      acme:
+        list:
+          - name: my another name
+      ```
 
+      如果开发人员没有激活 dev profile，则`AcmeProperties.list`包含一个`MyPojo`条目，如先前所定义。 但是，如果激活 dev profile，则该列表仍仅包含一个条目（name 是 my another name， description 为null）。 此配置不会将第二个MyPojo实例添加到列表中，并且不会合并项目。
+      在多个配置文件中指定列表时，将使用优先级最高的列表（并且仅使用那个列表）。 考虑以下示例：
+
+      ```yaml
+      acme:
+        list:
+          - name: my name
+            description: my description
+          - name: another name
+            description: another description
+      ---
+      spring:
+        profiles: dev
+      acme:
+        list:
+          - name: my another name
+      ```
+
+      前面的例子中，如果 dev profile 被激活，`AcmeProperties.list` 包含一个 MyPojo 实例。对于 YAML，逗号分隔的列表和 YAML 列表都可以用来完全覆盖 list 的内容。
+      对于 map 属性，可以绑定从多个来源的属性值。 但是，对于多个源中的同一属性，将使用优先级最高的属性。 下面的示例从`AcmeProperties`公开`Map <String，MyPojo>`：
+
+      ```java
+      @ConfigurationProperties("acme")
+      public class AcmeProperties {
+      
+          private final Map<String, MyPojo> map = new HashMap<>();
+      
+          public Map<String, MyPojo> getMap() {
+              return this.map;
+          }
+      
+      }
+      ```
+
+      考虑下面配置：
+
+      ```yaml
+      acme:
+        map:
+          key1:
+            name: my name 1
+            description: my description 1
+      ---
+      spring:
+        profiles: dev
+      acme:
+        map:
+          key1:
+            name: dev name 1
+          key2:
+            name: dev name 2
+            description: dev description 2
+      ```
+
+      
+
+如果 dev profile 没有被激活，则`AcmeProperties.map`包含一个键为key1的条目（ name 为 my name 1，description 为my descripiton 1）。 但是，如果 dev profile 被激活，则map包含两个条目，其中键为key1（name 为dev name 1，其description 为 my description 1）和key2（name 为dev name 2，其 description 为dev description 2） 。
 
 
 
