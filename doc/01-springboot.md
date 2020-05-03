@@ -1633,11 +1633,175 @@ Spring Boot 文档的简要总览，相当于目录
             description: dev description 2
       ```
 
+      如果 dev profile 没有被激活，则`AcmeProperties.map`包含一个键为key1的条目（ name 为 my name 1，description 为my descripiton 1）。 但是，如果 dev profile 被激活，则map包含两个条目，其中键为key1（name 为dev name 1，其description 为 my description 1）和key2（name 为dev name 2，其 description 为dev description 2） 。
+
+      **属性转换**
+
+      当Spring Boot绑定到`@ConfigurationProperties` bean时，它尝试将外部应用程序属性强制为正确的类型。 如果需要自定义类型转换，则可以提供一个`ConversionService` bean（具有一个名为`conversionService`的bean）或自定义属性编辑器（通过CustomEditorConfigurer bean）或自定义`Converters`（具有定义为`@ConfigurationPropertiesBinding`的bean定义）。
+
+      由于在应用程序生命周期中非常早就请求了此bean，因此请确保限制您的`ConversionService`使用的依赖项。 通常，您需要的任何依赖项在创建时可能都没有完全初始化。 如果配置键不需要自定义`ConversionService`，而仅依赖于具有`@ConfigurationPropertiesBinding`限定的自定义转换器，则可能需要重命名自定义`ConversionService`。
+      **时间转换**
+      Spring Boot为持续时间提供了专门的支持。 如果公开`java.time.Duration`属性，则应用程序属性中的以下格式可用：
+
+      * 常规的长整型表示形式（使用毫秒作为默认单位，除非已指定`@DurationUnit`）
+      * 标准的 ISO-8601 format [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
+      * 值和单位相结合的更易读的格式（例如10s表示10秒）
+
+      下面的例子：
+
+      ```java
+      @ConfigurationProperties("app.system")
+      public class AppSystemProperties {
       
+          @DurationUnit(ChronoUnit.SECONDS)
+          private Duration sessionTimeout = Duration.ofSeconds(30);
+      
+          private Duration readTimeout = Duration.ofMillis(1000);
+      
+          public Duration getSessionTimeout() {
+              return this.sessionTimeout;
+          }
+      
+          public void setSessionTimeout(Duration sessionTimeout) {
+              this.sessionTimeout = sessionTimeout;
+          }
+      
+          public Duration getReadTimeout() {
+              return this.readTimeout;
+          }
+      
+          public void setReadTimeout(Duration readTimeout) {
+              this.readTimeout = readTimeout;
+          }
+      
+      }
+      ```
 
-如果 dev profile 没有被激活，则`AcmeProperties.map`包含一个键为key1的条目（ name 为 my name 1，description 为my descripiton 1）。 但是，如果 dev profile 被激活，则map包含两个条目，其中键为key1（name 为dev name 1，其description 为 my description 1）和key2（name 为dev name 2，其 description 为dev description 2） 。
+      要指定30秒的会话超时，则`30`，`PT30S`和`30s`都是等效的。 可以使用以下任意形式指定500ms的读取超时：`500`，`PT0.5S`和`500ms`。
 
+      下面是单位：
 
+      * ns 纳秒
+      * us 微妙
+      * ms 毫秒
+      * s 秒
+      * m 分钟
+      * h 小时
+      * d 天
+
+      默认单位是毫秒，可以使用`@DurationUnit`覆盖，如上面的示例所示。
+
+      **数据大小转换**
+      Spring Framework具有`DataSize`值类型，以字节为单位表示大小。 如果公开`DataSize`属性，则应用程序属性中的以下格式可用：
+
+      * 常规的长整形表示（默认使用 字节为单位，可以 `@DataSizeUnit` 指定单位）
+      * 值和单位组成的友好格式（如 10MB）
+
+      下面的例子：
+
+      ```java
+      @ConfigurationProperties("app.io")
+      public class AppIoProperties {
+      
+          @DataSizeUnit(DataUnit.MEGABYTES)
+          private DataSize bufferSize = DataSize.ofMegabytes(2);
+      
+          private DataSize sizeThreshold = DataSize.ofBytes(512);
+      
+          public DataSize getBufferSize() {
+              return this.bufferSize;
+          }
+      
+          public void setBufferSize(DataSize bufferSize) {
+              this.bufferSize = bufferSize;
+          }
+      
+          public DataSize getSizeThreshold() {
+              return this.sizeThreshold;
+          }
+      
+          public void setSizeThreshold(DataSize sizeThreshold) {
+              this.sizeThreshold = sizeThreshold;
+          }
+      
+      }
+      ```
+
+      10 和 10MB 都可以指定一个 10兆的缓冲区大小。256字节可以使用 256 或者 256B。
+
+      下面是单位：
+
+      * B  字节
+      * KB 千字节
+      * MB 兆字节
+      * GB G字节
+      * TB T字节
+
+      可以使用 `@DataSizeUnit` 覆盖默认的单位--字节。
+      **@ConfigurationProperties 校验**
+      每当使用Spring的@Validated注释对`@ConfigurationProperties`类进行注释时，Spring Boot就会尝试对其进行验证。您可以在配置类上直接使用JSR-303 javax.validation约束注释。为此，请确保在类路径上有兼容的JSR-303实现，然后将约束注释添加到字段中，如以下示例所示：
+
+      ```java
+      @ConfigurationProperties(prefix="acme")
+      @Validated
+      public class AcmeProperties {
+      
+          @NotNull
+          private InetAddress remoteAddress;
+      
+          // ... getters and setters
+      
+      }
+      ```
+
+      您还可以通过使用`@Validated`注释创建配置属性的`@Bean`方法来触发验证。
+
+      为了确保始终为嵌套属性触发验证，即使未找到任何属性，也必须使用`@Valid`注释关联的字段。 以下示例基于前面的AcmeProperties示例：
+
+      ```java
+      @ConfigurationProperties(prefix="acme")
+      @Validated
+      public class AcmeProperties {
+      
+          @NotNull
+          private InetAddress remoteAddress;
+      
+          @Valid
+          private final Security security = new Security();
+      
+          // ... getters and setters
+      
+          public static class Security {
+      
+              @NotEmpty
+              public String username;
+      
+              // ... getters and setters
+      
+          }
+      
+      }
+      ```
+
+      您还可以通过创建一个名为`configurationPropertiesValidator`的bean定义来添加自定义的Spring `Validator`。 @Bean方法应声明为静态的。 配置属性验证器是在应用程序生命周期的早期创建的，并且将@Bean方法声明为static可以使创建该Bean而不必实例化@Configuration类。 这样做可以避免因早期实例化而引起的任何问题。
+
+      s`pring-boot-actuator`模块包括一个公开所有`@ConfigurationProperties` bean的端点。 将您的Web浏览器指向/actuator/configprops或使用等效的JMX端点。
+
+      **@ConfigurationProperties vs. @Value**
+
+      `@Value` 注解是核心容器功能，它没有提供与类型安全的配置属性相同的功能。 下表总结了@ConfigurationProperties和@Value支持的功能：
+
+      | 功能             | @ConfigurationProperties | @Value |
+      | ---------------- | ------------------------ | ------ |
+      | 松绑定           | 支持                     | 不支持 |
+      | 元数据支持       | 支持                     | 不支持 |
+      | SpEL  evaluation | 不支持                   | 支持   |
+
+      如果您为自己的组件定义了一组配置键，我们建议您将它们组合在以`@ConfigurationProperties`注释的POJO中。 您还应该意识到，由于`@Value`不支持宽松的绑定，因此如果您需要使用环境变量来提供值，`@Value` 它不是一个很好的选择。
+
+      最后，尽管您可以在`@Value`中编写SpEL表达式，但不会从应用程序属性文件中处理此类表达式。
+
+      
 
 
 
@@ -1652,7 +1816,7 @@ Spring Boot 提供监控和管理应用的功能。你可以使用 HTTP endpoint
 
 Spring Boot 提供灵活的打包方式，以满足应用可以部署在各种平台，如云平台、容器镜像（Docker），虚拟机或者物理机等。
 
-### 7、Spring Boot CLI
+### 7、Spring Boot CLISpring Framework具有DataSize值类型，以字节为单位表示大小。 如果公开DataSize属性，则应用程序属性中的以下格式可用：
 
 Spring Boot CLI 是用来部署 Spring 应用的命令行工具。提供 Groovy 脚本的方式运行。同时，你可以引用一个新项目或者自己写命令实现部署。
 
