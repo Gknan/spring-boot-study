@@ -19,6 +19,15 @@ acme:
       name: my name 1
       description: my description 1
 
+# 指定日志存储的文件
+logging:
+  file:
+    name: logs.txt
+  group: # 日志组
+    tomcat: org.apache.catalina, org.apache.coyote, org.apache.tomcat
+  level: # 定义 tomcat 组的日志级别
+    tomcat: TRACE
+
 --- # 只能是三个线，不能多
 spring:
   profiles: dev

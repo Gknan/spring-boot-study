@@ -1801,7 +1801,247 @@ Spring Boot 文档的简要总览，相当于目录
 
       最后，尽管您可以在`@Value`中编写SpEL表达式，但不会从应用程序属性文件中处理此类表达式。
 
+3. Profiles
+   Spring Profiles提供了一种隔离应用程序配置部分并使之仅在某些环境中可用的方法。可以使用`@Profile`标记任何`@Component`，`@ Configuration`或`@ConfigurationProperties`，以限制其加载时间，如以下示例所示：
+
+   ```java
+   @Configuration(proxyBeanMethods = false)
+   @Profile("production")
+   public class ProductionConfiguration {
+   
+       // ...
+   
+   }
+   ```
+
+   如果`@ConfigurationProperties` Bean是通过`@EnableConfigurationProperties`而非自动扫描注册的，则需要在具有`@EnableConfigurationProperties`批注的`@Configuration`类上指定`@Profile`批注。 在扫描`@ConfigurationProperties`的情况下，可以在`@ConfigurationProperties`类本身上指定`@Profile`。
+
+   您可以使用`spring.profiles.active`环境属性来指定哪些配置文件处于活动状态。 您可以通过本章前面介绍的任何方式指定属性。 例如，您可以将其包含在`application.properties`中，如以下示例所示：
+
+   ```properties
+   spring.profiles.active=dev,hsqldb
+   ```
+
+   您也可以使用以下开关在命令行上指定它：`--spring.profiles.active = dev，hsqldb`。
+
+   1. 添加 active profiles
+
+      `spring.profiles.active`属性遵循与其他属性相同的排序规则：最高的`PropertySource`获胜。 这意味着您可以在`application.properties`中指定活动配置文件，然后使用命令行开关替换它们。
+
+      有时，将特定于配置文件的属性添加到活动配置文件而不是替换它们是有用的。 `spring.profiles.include`属性可用于无条件添加活动配置文件。 `SpringApplication`入口点还具有Java API，用于设置其他配置文件（即，在由`spring.profiles.active`属性激活的配置文件之上）。 请参阅`SpringApplication`中的`setAdditionalProfiles()`方法。
+      例如，使用开关`--spring.profiles.active = prod`运行具有以下属性的应用程序时，`proddb`和`prodmq`配置文件也会被激活：
+
+      ```yaml
+      ---
+      my.property: fromyamlfile
+      ---
+      spring.profiles: prod
+      spring.profiles.include:
+        - proddb
+        - prodmq
+      ```
+
+      可以在YAML文档中定义`spring.profiles`属性，以确定何时将该特定文档包括在配置中。
+
+   2. 编程式设置 profiles
+      您可以在应用程序运行之前通过调用`SpringApplication.setAdditionalProfile(...)`以编程方式设置活动配置文件。 也可以使用Spring的`ConfigurableEnvironment` 接口来激活profiles 文件。
+
+   3. 特定配置文件
+      `application.properties`（或`application.yml`）和文件中的引用  `@ConfigurationProperties` 的特定配置变量被视为文件加载。
+
+4. 日志
+   Spring Boot使用Commons Logging进行所有内部日志记录，但是使底层日志实现保持打开状态。 提供了Java Util Logging，Log4J2和Logback的默认配置。 在每种情况下，记录器都已预先配置为使用控制台输出，同时还提供可选文件输出。
+
+   默认情况下，如果使用“starters”，则使用Logback进行日志记录。 还包括适当的Logback路由，以确保使用Java Util Logging，Commons Logging，Log4J或SLF4J的从属库都能正常工作。
+
+   有许多可用于Java的日志记录框架。 如果上面的列表看起来令人困惑，请不要担心。 通常，您不需要更改日志记录依赖项，并且Spring Boot默认值可以正常工作。
+
+   将应用程序部署到servlet容器或应用程序服务器时，通过Java Util Logging API执行的日志记录不会路由到应用程序的日志中。 这样可以防止容器或其他已部署到容器中的应用程序执行的日志记录出现在应用程序的日志中。
+
+   1. 日志格式
+      Spring Boot的默认日志输出类似于以下示例：
+
+      ```
+      2019-03-05 10:57:51.112  INFO 45469 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet Engine: Apache Tomcat/7.0.52
+      2019-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+      2019-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1358 ms
+      2019-03-05 10:57:51.698  INFO 45469 --- [ost-startStop-1] o.s.b.c.e.ServletRegistrationBean        : Mapping servlet: 'dispatcherServlet' to [/]
+      2019-03-05 10:57:51.702  INFO 45469 --- [ost-startStop-1] o.s.b.c.embedded.FilterRegistrationBean  : Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+      ```
+
+      输出的选项是：
+
+      * 日期和时间：秒级，按时间先后
+      * 日志级别：ERROR/WARN/INFO/DEBUG/TRACE
+      * PID：程序唯一标识
+      * `---` 分隔符，用于区分日志消息的开始
+      * 线程名称：用方括号括起来（对于控制台输出可能会被截断）。
+      * 记录器名称：这通常是源类名称（通常缩写）。
+      * 日志信息
+
+      Logback 没有 FATAL 级别日志，FATAL 被映射到 ERROR。
+
+   2. 控制台输出
+
+      默认日志配置在写入消息时将消息回显到控制台。 默认情况下，将记录ERROR级，WARN级和INFO级消息。 您还可以通过使用--debug标志启动应用程序来启用“调试”模式。
+
+      ```sh
+      bash: java -jar myapp.jar --debug
+      ```
+
+      也可以在 `application.properties` 文件中配置 `debug=true`
+
+      启用调试模式后，将配置一些核心记录器（嵌入式容器，Hibernate和Spring Boot）以输出更多信息。 启用调试模式不会并将您的应用程序配置为记录所有具有DEBUG级别的消息。
+      另外，您可以通过使用`--trace`标志（或`application.properties`中的`trace = true`）启动应用程序来启用“跟踪”模式。 这样做可以为某些核心记录器（嵌入式容器，Hibernate模式生成以及整个Spring产品组合）启用跟踪记录。
+      **彩色输出**
+      如果您的终端支持ANSI，则使用彩色输出来提高可读性。 您可以将`spring.output.ansi.enabled`设置为支持的值，以覆盖自动检测。
+
+      使用`％clr`转换字配置颜色编码。 转换器以最简单的形式根据对数级别为输出着色，如以下示例所示：
+
+      ```
+      %clr(%5p)
+      ```
+
+      下表描述了日志级别到颜色的映射：
+
+      | 级别  | 颜色 |
+      | ----- | ---- |
+      | FATAL | 红   |
+      | ERROR | 红   |
+      | WARN  | 黄   |
+      | INFO  | 绿   |
+      | DEBUG | 绿   |
+      | TRACE | 绿   |
+
+      另外，您可以通过将其提供为转换的选项来指定应使用的颜色或样式。 例如，要使文本变黄，请使用以下设置：
+
+      ```
+      %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){yellow}
+      ```
+
+      支持以下颜色和样式：
+
+      * 蓝色
+      * cyan（青色）
+      * faint
+      * 绿色
+      * magenta（品红）
+      * 红色
+      * 黄色
+
+   3. 文件输出
+
+      默认情况下，Spring Boot只记录到控制台，不写日志文件。 如果除了控制台输出外还想写日志文件，则需要设置`logging.file.name`或`logging.file.path`属性（例如，在`application.properties`中）。
+      下表显示了`logging.*`属性如何一起使用：
+      Table7 日志属性
+
+      | logging.file.name | logging.file.path | 例子     | 描述                                                         |
+      | ----------------- | ----------------- | -------- | ------------------------------------------------------------ |
+      | none              | none              |          | 只在控制台打印                                               |
+      | 特定的文件        | none              | my.log   | 写入指定的日志文件。 名称可以是确切的位置，也可以相对于当前目录。 |
+      | none              | 特定的文件夹      | /var/log | 将`spring.log`写入指定目录。 名称可以是确切的位置，也可以相对于当前目录。 |
+
+      日志文件达到10 MB时会重写，并且与控制台输出一样，默认情况下会记录ERROR级别，WARN级别和INFO级别的消息。 可以使用`logging.file.max-size`属性更改大小限制。 除非已设置`logging.file.max-history`属性，否则默认情况下将保留最近7天的轮转日志文件。 可以使用`logging.file.total-size-cap`限制日志归档文件的总大小。 当日志归档的总大小超过该阈值时，将删除备份。 要在应用程序启动时强制清除日志存档，请使用`logging.file.clean-history-on-start`属性。
+
+      日志记录属性独立于实际的日志记录基础结构。 所以，特定的配置键（例如Logback的`logback.configurationFile`）不是由Spring Boot管理的。
+
+   4. 日志级别
+      通过使用logging.level，可以在Spring环境中（例如，在application.properties中）设置所有受支持的日志记录器级别。<logger-name> = <level>，其中level是TRACE，DEBUG，INFO，WARN, ERROR, FATAL, or OFF。 可以使用`logging.level.root`配置根记录器。
+      以下示例显示了`application.properties`中的默认日志记录设置：
+
+      ```properties
+      logging.level.org.springframework.web=debug
+      logging.level.org.hibernate=error
+      ```
+
+      也可以使用环境变量设置日志记录级别。 例如，`LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB = DEBUG`会将`org.springframework.web`设置为DEBUG。
+
+   5. 日志组
+      能够将相关记录器组合在一起通常很有用，以便可以同时配置它们。 例如，您可能通常会更改所有与Tomcat相关的记录器的日志记录级别，但是您不容易记住顶级软件包。
+      为了解决这个问题，Spring Boot允许您在Spring Environment中定义日志记录组。 例如，以下是通过将“ tomcat”组添加到`application.properties`来定义它的方法：
+
+      ```properties
+      logging.group.tomcat=org.apache.catalina, org.apache.coyote, org.apache.tomcat
+      ```
+
+      定义后，您可以使用一行更改该组中所有记录器的级别：
+
+      ```properties
+      logging.level.tomcat=TRACE
+      ```
+
+      Spring Boot包含以下预定义的日志记录组，它们可以直接使用：
+
+      | 名称 | 日志记录器                                                   |
+      | ---- | ------------------------------------------------------------ |
+      | web  | org.springframework.core.codec`, `org.springframework.http`, `org.springframework.web`, `org.springframework.boot.actuate.endpoint.web`, `org.springframework.boot.web.servlet.ServletContextInitializerBeans |
+      | sql  | org.springframework.jdbc.core`, `org.hibernate.SQL`, `org.jooq.tools.LoggerListener |
+
+   6. 自定义日志配置可以通过在类路径上包含适当的库来激活各种日志记录系统，并可以通过在类路径的根目录或以下Spring Environment属性指定的位置中提供适当的配置文件来进一步自定义日志文件：`logging.config`。
+      您可以通过使用`org.springframework.boot.logging.LoggingSystem`系统属性来强制Spring Boot使用特定的日志记录系统。 该值应该是`LoggingSystem`实现的完全限定的类名。 您也可以使用 node 来完全禁用Spring Boot的日志记录配置。
+      由于日志记录是在创建`ApplicationContext`之前初始化的，因此无法从Spring `@Configuration`文件中的`@PropertySources`控制日志记录。 更改日志记录系统或完全禁用它的唯一方法是通过系统属性。
+
+      根据日志系统的不同，下面文件被加载：
+
+      | 日志系统                | 定制                                                         |
+      | ----------------------- | ------------------------------------------------------------ |
+      | Logback                 | logback-spring.xml`, `logback-spring.groovy`, `logback.xml`, or `logback.groovy |
+      | Log4j2                  | log4j2-spring.xml` or `log4j2.xml                            |
+      | JDK (Java Util Logging) | logging.properties                                           |
+
+      如果可能，我们建议您在日志配置中使用-spring变体（例如，logback-spring.xml而不是logback.xml）。 如果使用标准配置位置，Spring将无法完全控制日志初始化。
+      从“可执行jar”运行时，Java Util Logging存在一些已知的类加载问题，这些问题会引起问题。 我们建议您尽可能从“可执行jar”运行时避免使用它。
+      为了帮助定制，将其他一些属性从Spring Environment转移到System属性，如下表所述：
+      。。。
+      所有受支持的日志记录系统在解析其配置文件时都可以查阅系统属性。 有关示例，请参见spring-boot.jar中的默认配置：
+
+      * [Logback](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/logback/defaults.xml)
+      * [Log4j 2](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/log4j2/log4j2.xml)
+      * [Java Util logging](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/java/logging-file.properties)
+
+   7. Logback 扩展
+      Spring Boot包含许多Logback扩展，可以帮助进行高级配置。 您可以在logback-spring.xml配置文件中使用这些扩展名。
+
+      由于标准logback.xml配置文件加载得太早，因此无法在其中使用扩展名。 您需要使用logback-spring.xml或定义logging.config属性。
+
+      这些扩展不能与Logback的配置扫描一起使用。
+
+      **特殊化配置**
+      通过<springProfile>标记，您可以根据活动的Spring概要文件有选择地包括或排除配置部分。下面是案例：
+
+      ```xml
+      <springProfile name="staging">
+          <!-- configuration to be enabled when the "staging" profile is active -->
+      </springProfile>
       
+      <springProfile name="dev | staging">
+          <!-- configuration to be enabled when the "dev" or "staging" profiles are active -->
+      </springProfile>
+      
+      <springProfile name="!production">
+          <!-- configuration to be enabled when the "production" profile is not active -->
+      </springProfile>
+      ```
+
+      **环境属性**
+      <springProperty>标记使你在使用 Logback 时可以从Spring `Environment`中公开属性。 如果要访问Logback配置中的`application.properties`文件中的值，则这样做很有用。 该标签的工作方式类似于Logback的标准<property>标签。但是，您没有指定直接 value ，而是指定了属性的 source（来自`Environment`）。 如果需要将属性存储在本地范围以外的其他位置，则可以使用scope属性。 如果需要 `fallback` 值（如果未在环境中设置该属性），则可以使用`defaultValue`属性。以下示例显示如何公开在Logback中使用的属性：
+
+      ```xml
+      <springProperty scope="context" name="fluentHost" source="myapp.fluentd.host"
+              defaultValue="localhost"/>
+      <appender name="FLUENT" class="ch.qos.logback.more.appenders.DataFluentAppender">
+          <remoteHost>${fluentHost}</remoteHost>
+          ...
+      </appender>
+      ```
+
+      必须以kebab形式指定 `source`（例如my.property-name）。 但是，可以使用松绑定将属性添加到环境中。
+
+5. 国际化
+
+
+
+
 
 
 

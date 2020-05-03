@@ -1,0 +1,18 @@
+2020-05-03 12:41:04.251  INFO 20196 --- [restartedMain] cn.hust.study.springboot.Example         : Starting Example on DESKTOP-8IPKGHU with PID 20196 (G:\learn-skills\springbootstudy\myproject\target\classes started by Gknan in G:\learn-skills\springbootstudy)
+2020-05-03 12:41:04.267  INFO 20196 --- [restartedMain] cn.hust.study.springboot.Example         : No active profile set, falling back to default profiles: default
+2020-05-03 12:41:04.470  INFO 20196 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2020-05-03 12:41:04.470  INFO 20196 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2020-05-03 12:41:06.173  INFO 20196 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.33]
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] o.a.catalina.core.AprLifecycleListener   : Loaded APR based Apache Tomcat Native library [1.2.23] using APR version [1.7.0].
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] o.a.catalina.core.AprLifecycleListener   : APR capabilities: IPv6 [true], sendfile [true], accept filters [false], random [true].
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] o.a.catalina.core.AprLifecycleListener   : APR/OpenSSL configuration: useAprConnector [false], useOpenSSL [true]
+2020-05-03 12:41:06.188  INFO 20196 --- [restartedMain] o.a.catalina.core.AprLifecycleListener   : OpenSSL successfully initialized [OpenSSL 1.1.1c  28 May 2019]
+2020-05-03 12:41:06.267  INFO 20196 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2020-05-03 12:41:06.267  INFO 20196 --- [restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1797 ms
+2020-05-03 12:41:06.688  INFO 20196 --- [restartedMain] c.h.s.springboot.service.impl.MyService  : AcmeProperties.map is: {"key1":{"description":"my description 1","name":"my name 1"}}
+2020-05-03 12:41:06.813  INFO 20196 --- [restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2020-05-03 12:41:06.954  INFO 20196 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2020-05-03 12:41:07.001  INFO 20196 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2020-05-03 12:41:07.001  INFO 20196 --- [restartedMain] cn.hust.study.springboot.Example         : Started Example in 3.587 seconds (JVM running for 5.311)
