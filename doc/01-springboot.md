@@ -1,4 +1,4 @@
-官网地址：https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/
+Spring MVC使用HttpMessageConverter接口转换HTTP请求和响应。 开箱即用中包含明智的默认设置。 例如，可以将对象自动转换为JSON（通过使用Jackson库）或XML（通过使用Jackson XML扩展（如果可用），或者通过使用JAXB（如果Jackson XML扩展不可用））。 默认情况下，字符串以UTF-8编码。官网地址：https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/
 
 
 
@@ -2038,6 +2038,275 @@ Spring Boot 文档的简要总览，相当于目录
       必须以kebab形式指定 `source`（例如my.property-name）。 但是，可以使用松绑定将属性添加到环境中。
 
 5. 国际化
+   Spring Boot支持本地化消息，因此您的应用程序可以迎合不同语言首选项的用户。 默认情况下，Spring Boot在类路径的根目录下查找 `message` 资源包的存在。
+   当已配置资源包的默认属性文件可用时（即默认情况下为`messages.properties`），将应用自动配置。 如果您的资源包仅包含特定于语言的属性文件，则需要添加默认文件。 如果找不到与任何配置的基本名称匹配的属性文件，将没有自动配置的`MessageSource`。
+
+   可以使用`spring.messages`命名空间配置资源包的基本名称以及其他几个属性，如以下示例所示：
+
+   ```properties
+   spring.messages.basename=messages,config.i18n.messages
+   spring.messages.fallback-to-system-locale=false
+   ```
+
+   `spring.messages.basename`支持以逗号分隔的位置列表，可以是包限定符，也可以是从类路径根目录解析的资源。
+
+   更多请查看 [`MessageSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/context/MessageSourceProperties.java) 
+
+6. JSON
+   Spring Boot提供了与三个JSON映射库的集成：
+
+   * GSON
+   * Jackson
+   * JSON-B
+
+   Jackson 是默认的选项，推荐使用。
+
+   1. Jackson
+      提供了Jackson的自动配置，并且Jackson是`spring-boot-starter-json`的一部分。 当Jackson放在类路径上时，将自动配置`ObjectMapper` Bean。 [提供了几个配置属性](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#howto-customize-the-jackson-objectmapper)，用于自定义`ObjectMapper`的配置。
+   2. GSON
+   3. JSON-B
+
+7. 开发 Web 应用
+   Spring Boot非常适合Web应用程序开发。 您可以使用嵌入式Tomcat，Jetty，Undertow或Netty创建独立的HTTP服务器。 大多数Web应用程序都使用`spring-boot-starter-web`模块来快速启动和运行。 您还可以选择使用`spring-boot-starter-webflux`模块构建反应式Web应用程序。
+
+   1. Spring Web MVC Framework
+      Spring Web MVC框架（通常简称为“ Spring MVC”）是一个丰富的“模型视图控制器” Web框架。 Spring MVC使您可以创建特殊的`@Controller`或`@RestController` Bean来处理传入的HTTP请求。 使用`@RequestMapping`注解将控制器中的方法映射到HTTP。
+      以下代码显示了提供JSON数据的典型`@RestController`：
+
+      ```java
+      @RestController
+      @RequestMapping(value="/users")
+      public class MyRestController {
+      
+          @RequestMapping(value="/{user}", method=RequestMethod.GET)
+          public User getUser(@PathVariable Long user) {
+              // ...
+          }
+      
+          @RequestMapping(value="/{user}/customers", method=RequestMethod.GET)
+          List<Customer> getUserCustomers(@PathVariable Long user) {
+              // ...
+          }
+      
+          @RequestMapping(value="/{user}", method=RequestMethod.DELETE)
+          public User deleteUser(@PathVariable Long user) {
+              // ...
+          }
+      
+      }
+      ```
+
+      Spring MVC是核心Spring Framework的一部分，有关详细信息，请参阅参考[文档](https://docs.spring.io/spring/docs/5.2.5.RELEASE/spring-framework-reference/web.html#mvc)。 
+
+      **Spring MVC 自动配置**
+      Spring Boot为Spring MVC提供了自动配置，可与大多数应用程序完美配合。
+
+      自动配置在Spring的默认设置之上添加了以下功能：
+
+      * 包含`ContentNegotiatingViewResolver`和`BeanNameViewResolver` Bean。
+      * 支持提供静态资源，包括对WebJars的支持（在本文档的后面部分有介绍）。
+      * 自动注册`Converter`，`GenericConverter`和`Formatter` Bean。
+      * 支持 `HttpMessageConverters`
+      * `MessageCodesResolver` 自动注册
+      * 静态 `index.html` 支持
+      * 自定义 `Favicon` 支持
+      * 自动使用`ConfigurableWebBindingInitializer` bean
+
+      如果要保留这些Spring Boot MVC定制并进行更多的MVC定制（拦截器，格式化程序，视图控制器和其他功能），则可以添加自己的类型为`WebMvcConfigurer`的`@Configuration`类，但不要使用`@EnableWebMvc`。
+
+      如果要提供`RequestMappingHandlerMapping`，`RequestMappingHandlerAdapter`或`ExceptionHandlerExceptionResolver`的自定义实例，并且仍然保留Spring Boot MVC自定义，则可以声明`WebMvcRegistrations`类型的bean，并使用它提供那些组件的自定义实例。
+
+      如果要完全控制Spring MVC，则可以添加用`@EnableWebMvc`注释的自己的`@Configuration`，或者按照`@EnableWebMvc`的Javadoc中的说明添加自己的`@Configuration`注释的`DelegatingWebMvcConfiguration`。
+
+      **HttpMessageConverters**
+
+      Spring MVC使用HttpMessageConverter接口转换HTTP请求和响应。 开箱即用中包含明智的默认设置。 例如，可以将对象自动转换为JSON（通过使用Jackson库）或XML（通过使用Jackson XML扩展（如果可用），或者通过使用JAXB（如果Jackson XML扩展不可用））。 默认情况下，字符串以UTF-8编码。
+      如果您需要添加或自定义转换器，则可以使用Spring Boot的`HttpMessageConverters`类，如以下清单所示：
+
+      ```java
+      import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+      import org.springframework.context.annotation.*;
+      import org.springframework.http.converter.*;
+      
+      @Configuration(proxyBeanMethods = false)
+      public class MyConfiguration {
+      
+          @Bean
+          public HttpMessageConverters customConverters() {
+              HttpMessageConverter<?> additional = ...
+              HttpMessageConverter<?> another = ...
+              return new HttpMessageConverters(additional, another);
+          }
+      
+      }
+      ```
+
+      上下文中存在的所有`HttpMessageConverter` bean都将添加到转换器列表中。 您也可以用相同的方法覆盖默认转换器。
+      **定义 JSON 序列化器和反序列化器**
+      如果使用Jackson序列化和反序列化JSON数据，则可能要编写自己的`JsonSerializer`和`JsonDeserializer`类。 自定义序列化程序通常是通过模块向Jackson进行注册的，但是Spring Boot提供了一种替代性的`@JsonComponent`注解，这使得直接注册Spring Bean更加容易。
+      您可以直接在`JsonSerializer`，`JsonDeserializer`或`KeyDeserializer`实现上使用`@JsonComponent`注解。 您还可以在包含序列化器/反序列化器作为内部类的类上使用它，如以下示例所示：
+
+      ```java
+      import java.io.*;
+      import com.fasterxml.jackson.core.*;
+      import com.fasterxml.jackson.databind.*;
+      import org.springframework.boot.jackson.*;
+      
+      @JsonComponent
+      public class Example {
+      
+          public static class Serializer extends JsonSerializer<SomeObject> {
+              // ...
+          }
+      
+          public static class Deserializer extends JsonDeserializer<SomeObject> {
+              // ...
+          }
+      
+      }
+      ```
+
+      `ApplicationContext`中的所有`@JsonComponent` bean都会自动向Jackson注册。 因为`@JsonComponent`是带有 `@Component` 的元注解，所以通常的组件扫描规则适用。
+      Spring Boot还提供了`JsonObjectSerializer`和`JsonObjectDeserializer`基类，这些基类在序列化对象时为标准Jackson版本提供了有用的替代方法。 有关详细信息，请参见Javadoc中的[`JsonObjectSerializer`](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/api//org/springframework/boot/jackson/JsonObjectSerializer.html)和[`JsonObjectDeserializer`](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/api//org/springframework/boot/jackson/JsonObjectDeserializer.html)。
+
+      **MessageCodesResolver**
+      Spring MVC有一个生成错误代码以从绑定错误中呈现错误消息的策略：`MessageCodesResolver`。 如果设置`spring.mvc.message-codes-resolver-format`属性`PREFIX_ERROR_CODE`或`POSTFIX_ERROR_CODE`，Spring Boot会为您创建一个`MessageCodesResolver`（请参见`DefaultMessageCodesResolver.Format`中的枚举）。
+
+      **静态资源**
+      默认情况下，Spring Boot从类路径中的`/static`目录（或`/ public`或`/resources`或`/META-INF/resources`）或`ServletContext`的根目录中提供静态内容。 它使用Spring MVC中的`ResourceHttpRequestHandler`，以便您可以通过添加自己的`WebMvcConfigurer`并覆盖`addResourceHandlers`方法来修改该行为。
+
+      在独立的Web应用程序中，启用了容器中的默认Servlet，并将其用作后备，如果Spring决定不处理，则从`ServletContext`的根目录提供内容。 在大多数情况下，这不会发生（除非您修改默认的MVC配置），因为Spring始终可以通过`DispatcherServlet`处理请求。
+
+      默认情况下，资源映射在`/**`上，但是您可以使用`spring.mvc.static-path-pattern`属性进行调整。 例如，将所有资源重定位到`/resources/**`可以实现如下：
+
+      ```properties
+      spring.mvc.static-path-pattern=/resources/**
+      ```
+
+      您还可以使用`spring.resources.static-locations`属性来自定义静态资源位置（用目录位置列表替换默认值）。 根Servlet上下文路径“ /”也会自动添加为位置。
+      除了前面提到的“标准”静态资源位置，Webjar内容也有特殊情况。 如果jar文件以Webjars格式打包，则从jar文件提供带有`/webjars/**`路径的所有资源。
+
+      如果您的应用程序打包为jar，则不要使用`src/main/webapp`目录。 尽管此目录是一个通用标准，但它仅与war打包一起使用，并且如果生成jar，大多数构建工具都将其忽略。
+
+      Spring Boot还支持Spring MVC提供的高级资源处理功能，允许使用案例，例如缓存清除静态资源或对Webjars使用版本无关的URL。
+
+      要对Webjars使用版本无关的URL，请添加`webjars-locator-core`依赖项。 然后声明您的Webjar。 以jQuery为例，添加`"/webjars/jquery/jquery.min.js”`将得到`“/webjars/jquery/x.y.z/jquery.min.js”`，其中`x.y.z`是Webjar版本。
+
+      要使用缓存清除，以下配置为所有静态资源配置了缓存清除解决方案，从而有效地在URL中添加了内容哈希，例如`<link href =“ / css / spring-2a2d595e6ed9a0b24f027f2b63b134d6.css” />，`
+
+      ```properties
+      spring.resources.chain.strategy.content.enabled=true
+      spring.resources.chain.strategy.content.paths=/**
+      ```
+
+      例如，当使用JavaScript模块加载器动态加载资源时，不能重命名文件。 这就是为什么其他策略也受支持并且可以组合的原因。 “固定”策略在URL中添加静态版本字符串，而不更改文件名，如以下示例所示：
+
+      ```properties
+      spring.resources.chain.strategy.content.enabled=true
+      spring.resources.chain.strategy.content.paths=/**
+      spring.resources.chain.strategy.fixed.enabled=true
+      spring.resources.chain.strategy.fixed.paths=/js/lib/
+      spring.resources.chain.strategy.fixed.version=v12
+      ```
+
+      通过这种配置，位于`“/js/lib/”`下的JavaScript模块使用固定的版本控制策略（`“/v12/js/lib/mymodule.js”`），而其他资源仍使用内容版本（`<link href =“/css/spring-2a2d595e6ed9a0b24f027f2b63b134d6.css“/>`）。
+
+      查看 `ResourceProperties` 看更多细节。
+
+      **Welcome Page**
+      Spring Boot支持静态和模板欢迎页面。 它首先在配置的静态内容位置中查找`index.html`文件。 如果未找到，则寻找 `index` 模板。 如果找到任何一个，它将自动用作应用程序的欢迎页面。
+
+      **自定义图标**
+      与其他静态资源一样，Spring Boot在已配置的静态内容位置中查找`favicon.ico`。 如果存在这样的文件，它将自动用作应用程序的收藏夹图标。
+      **路径匹配和内容协商**
+      Spring MVC可以通过查看请求路径并将其匹配到应用程序中定义的映射（例如，Controller方法上的`@GetMapping` 注解）来将传入的HTTP请求映射到处理程序。
+      Spring Boot默认选择禁用后缀模式匹配，这意味着`“ GET /projects/spring-boot.json”`之类的请求将不会与`@GetMapping（“ / projects / spring-boot”）`映射进行匹配。 这被认为是Spring MVC应用程序的最佳实践。过去，内容协商功能主要用于未发送正确的“ Accept”请求标头的HTTP客户端。 我们需要确保将正确的内容类型发送给客户端。 如今，内容协商已变得更加可靠。
+
+      还有其他处理 不能始终发送正确的“ Accept”请求标头HTTP客户端的方法。 除了使用后缀匹配，我们还可以使用查询参数来确保将诸如`“ GET / projects / spring-boot？format = json”`之类的请求映射到`@GetMapping（“ / projects / spring-boot”）`：
+
+      ```properties
+      spring.mvc.contentnegotiation.favor-parameter=true
+      
+      # We can change the parameter name, which is "format" by default:
+      # spring.mvc.contentnegotiation.parameter-name=myparam
+      
+      # We can also register additional file extensions/media types with:
+      spring.mvc.contentnegotiation.media-types.markdown=text/markdown
+      ```
+
+      后缀模式匹配已被弃用，并将在以后的版本中删除。 如果您了解了注意事项，但仍希望您的应用程序使用后缀模式匹配，则需要以下配置：
+
+      ```properties
+      spring.mvc.contentnegotiation.favor-path-extension=true
+      spring.mvc.pathmatch.use-suffix-pattern=true
+      ```
+
+      另外，与其打开所有后缀模式，不如只支持已注册的后缀模式，这更安全：
+
+      ```properties
+      spring.mvc.contentnegotiation.favor-path-extension=true
+      spring.mvc.pathmatch.use-registered-suffix-pattern=true
+      
+      # You can also register additional file extensions/media types with:
+      # spring.mvc.contentnegotiation.media-types.adoc=text/asciidoc
+      ```
+
+      **ConfigurableWebBindingInitializer**
+      Spring MVC使用`WebBindingInitializer`初始化特定请求的`WebDataBinder`。 如果创建自己的`ConfigurableWebBindingInitializer` `@Bean`，Spring Boot会自动配置Spring MVC以使用它。
+
+      **模板引擎**
+      除了REST Web服务之外，您还可以使用Spring MVC来提供动态HTML内容。 Spring MVC支持各种模板技术，包括Thymeleaf，FreeMarker和JSP。 同样，许多其他模板引擎包括它们自己的Spring MVC集成。
+
+      Spring Boot包括对以下模板引擎的自动配置支持：
+
+      - [FreeMarker](https://freemarker.apache.org/docs/)
+      - [Groovy](http://docs.groovy-lang.org/docs/next/html/documentation/template-engines.html#_the_markuptemplateengine)
+      - [Thymeleaf](https://www.thymeleaf.org/)
+      - [Mustache](https://mustache.github.io/)
+
+      如果可能，应避免使用JSP。 将它们与嵌入式servlet容器一起使用时，存在几个已知的限制。
+
+      在默认配置下使用这些模板引擎之一时，将从`src/main/resources/templates`中自动提取模板。
+
+      根据您运行应用程序的方式，IntelliJ IDEA对类路径的排序方式不同。 与使用Maven或Gradle或从打包的jar运行应用程序时，从IDE的主方法运行应用程序的顺序会有所不同。 这可能会导致Spring Boot无法在类路径上找到模板。 如果遇到此问题，可以在IDE中重新排序类路径，以首先放置模块的类和资源。 或者，您可以配置模板前缀以搜索类路径上的每个模板目录，如下所示：`classpath*:/templates/`。
+
+      **错误处理**
+      默认情况下，Spring Boot提供了一个`/ error`映射，以一种明智的方式处理所有错误，并且在servlet容器中被注册为“全局”错误页面。 对于机器客户端，它将生成JSON响应，其中包含错误，HTTP状态和异常消息的详细信息。
+
+      对于浏览器客户端，有一个“ whitelabel”错误视图以HTML格式呈现相同的数据（要对其进行自定义，请添加一个可解决错误的视图）。 要完全替换默认行为，可以实现`ErrorController`并注册该类型的bean定义，或者添加类型为`ErrorAttributes`的bean以使用现有机制，但替换其内容。
+
+      `BasicErrorController`可用作自定义`ErrorController`的基类。 如果要为新的内容类型添加处理程序（默认是专门处理`text /html`并为其他所有内容提供后备功能），则此功能特别有用。 为此，请扩展`BasicErrorController`，添加具有`@produceMapping`且具有`Produces`属性的公共方法，并创建新类型的bean。
+
+      您还可以定义一个带有`@ControllerAdvice`注释的类，以自定义JSON文档以针对特定的控制器和/或异常类型返回，如以下示例所示：
+
+      ```java
+      @ControllerAdvice(basePackageClasses = AcmeController.class)
+      public class AcmeControllerAdvice extends ResponseEntityExceptionHandler {
+      
+          @ExceptionHandler(YourException.class)
+          @ResponseBody
+          ResponseEntity<?> handleControllerException(HttpServletRequest request, Throwable ex) {
+              HttpStatus status = getStatus(request);
+              return new ResponseEntity<>(new CustomErrorType(status.value(), ex.getMessage()), status);
+          }
+      
+          private HttpStatus getStatus(HttpServletRequest request) {
+              Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
+              if (statusCode == null) {
+                  return HttpStatus.INTERNAL_SERVER_ERROR;
+              }
+              return HttpStatus.valueOf(statusCode);
+          }
+      
+      }
+      ```
+
+      在前面的示例中，如果与`AcmeController`在同一包中定义的控制器抛出`YourException`，则将使用`CustomErrorType` POJO的JSON表示形式而不是`ErrorAttributes`表示形式。
+
+      **自定义错误页面**
+      如果要显示给定状态代码的自定义HTML错误页面，可以将文件添加到/ error文件夹。 错误页面可以是静态HTML（即添加到任何静态资源文件夹下），也可以使用模板来构建。 文件名应为确切的状态代码或系列掩码。
+
+      
 
 
 
