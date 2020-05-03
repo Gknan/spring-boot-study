@@ -4,6 +4,7 @@ import cn.hust.study.springboot.config.ListPropertiesConfig;
 import cn.hust.study.springboot.config.PasswordConfig;
 import cn.hust.study.springboot.entity.MyBean4;
 import cn.hust.study.springboot.entity.MyBean5;
+import cn.hust.study.springboot.service.impl.MyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,12 +61,21 @@ public class MyController {
         return stringBuilder.toString();
     }
 
-    @Autowired
-    private PasswordConfig passwordConfig;
+//    @Autowired
+//    private PasswordConfig passwordConfig;
+//
+//    @GetMapping("/getpwd")
+//    public String getPasswd() {
+//        return passwordConfig.getPasswd();
+//    }
 
-    @GetMapping("/getpwd")
-    public String getPasswd() {
-        return passwordConfig.getPasswd();
+
+    @Autowired
+    private MyService myService;
+
+    @GetMapping("/opencon")
+    public void openConnection() {
+        myService.openConnection();
     }
 
 }

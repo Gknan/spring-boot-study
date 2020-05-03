@@ -4,6 +4,13 @@ server:
 # 自定义属性::
 name: zhangsan
 
+acme:
+  remote-address: 192.168.1.1 # 支持 remote-address 匹配 remoteAddress
+  security:
+    username: admin
+    roles:
+      - USER
+      - ADMIN
 
 spring:
   application:
@@ -20,8 +27,6 @@ spring:
 #      exclude: static/**, public/**
       # 保持默认的排除位置基础上添加排除
   # 关闭程序启动的日志
-  datasource:
-    driver-class-name:
 #  banner:
 #    location: META-INF/banner/banner.txt
 #  main:

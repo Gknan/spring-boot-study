@@ -1276,9 +1276,295 @@ Spring Boot 文档的简要总览，相当于目录
 
       建议不要把 profile-specific YAML 文件和 多 YAML 文档混着用，只使用其中一种足够。
 
-      
+   8. 类型安全的配置属性
+      使用 `@Value(${property})` 注解注入配置属性值有时会比较麻烦，特别是你有多个属性或者你的数据的层级比较深时。Spring Boot 提供了另外一种方法，你可以使用使用 bean 强类型管理和检验应用的配置值。
+      **JavaBean** 的属性绑定
+      可以按照下面的例子的方式绑定一个声明式的标准 JavaBean：
 
- 
+      ```java
+      @ConfigurationProperties("acme")
+      public class AcmeProperties {
+      
+          private boolean enabled;
+      
+          private InetAddress remoteAddress;
+      
+          private final Security security = new Security();
+      
+          public boolean isEnabled() { }
+      
+          public void setEnabled(boolean enabled) { }
+      
+      //    public InetAddressress getRemoteAddress() { return remoteAddress }
+      
+          public void setRemoteAddress(InetAddress remoteAddress) {  }
+      
+          public Security getSecurity() { return security; }
+      
+          public static class Security {
+      
+              private String username;
+      
+              private String password;
+      
+              private List<String> roles = new ArrayList<>(Collections.singleton("USER"));
+      
+              public String getUsername() {  }
+      
+              public void setUsername(String username) {  }
+      
+              public String getPassword() {  }
+      
+              public void setPassword(String password) {  }
+      
+              public List<String> getRoles() {  }
+      
+              public void setRoles(List<String> roles) {  }
+      
+          }
+      }
+      
+      ```
+
+      前面的 POJO 定义了下面的属性：
+
+      * acme.enabled，默认值是 false
+      * acme.remote-address，可以转换成 String
+      * acme.security.username，属于一个内置的 “security” 对象，该对象名由属性名决定。返回类型没有被使用，可能是 `SecurityProperties`。
+      * acme.security.password
+      * acme.security.roles，String 类型的集合，默认是 USER
+
+      这种安排依赖于默认的空构造函数，并且getter和setter通常是强制性的，因为绑定是通过标准Java Beans属性描述符进行的，就像在Spring MVC中一样。 在以下情况下，可以忽略 setter 方法：
+
+      * Maps，一旦初始化完毕，只需要 getter 方法，不需要 setter 方法，因为可以通过 绑定器改变。
+      * 通过 YAML 或者 Properties 文件获取的 集合或者列表。级列表中，setter 是强制的。建议在列表类型中添加 setter 方法。如果初始化一个集合，确保该集合是可变的。
+      * 如果 内置的 POJO 属性被初始化（比如上面例子中的 `Security`），则不需要 setter。你若你想使用绑定器通过默认的构造器创建实例，你需要一个 setter 方法。
+
+      可以使用 Lombok 自动加入 getter 和 setter 方法。确保 Lombok 不会生成特殊的构造器，因为他通常在容器初始化对象时是自动使用的。
+
+      **构造器绑定**
+      前面的例子可以以下面不可变的形式重写：
+
+      ```java
+      package com.example;
+      
+      import java.net.InetAddress;
+      import java.util.List;
+      
+      import org.springframework.boot.context.properties.ConfigurationProperties;
+      import org.springframework.boot.context.properties.ConstructorBinding;
+      import org.springframework.boot.context.properties.bind.DefaultValue;
+      
+      @ConstructorBinding
+      @ConfigurationProperties("acme")
+      public class AcmeProperties {
+      
+          private final boolean enabled;
+      
+          private final InetAddress remoteAddress;
+      
+          private final Security security;
+      
+          public AcmeProperties(boolean enabled, InetAddress remoteAddress, Security security) {
+              this.enabled = enabled;
+              this.remoteAddress = remoteAddress;
+              this.security = security;
+          }
+      
+          public boolean isEnabled() { ... }
+      
+          public InetAddress getRemoteAddress() { ... }
+      
+          public Security getSecurity() { ... }
+      
+          public static class Security {
+      
+              private final String username;
+      
+              private final String password;
+      
+              private final List<String> roles;
+      
+              public Security(String username, String password,
+                      @DefaultValue("USER") List<String> roles) {
+                  this.username = username;
+                  this.password = password;
+                  this.roles = roles;
+              }
+      
+              public String getUsername() { ... }
+      
+              public String getPassword() { ... }
+      
+              public List<String> getRoles() { ... }
+      
+          }
+      
+      }
+      ```
+
+      在此设置中，`@ConstructorBinding `注解注用于指示应使用构造函数绑定。这意味着绑定器将期望找到带有您希望绑定的参数的构造函数。
+
+      `@ConstructorBinding` 类的嵌套成员（例如上例中的Security）也将通过其构造函数进行绑定。
+
+      可以使用 `@DefaultValue` 指定默认值，并且将应用相同的转换服务将String值强制为缺少属性的目标类型。
+
+      要使用构造函数绑定，必须使用@`EnableConfigurationProperties`或配置属性扫描来启用该类。 您不能对通过常规Spring机制创建的bean使用构造函数绑定（例如@Component bean，通过@Bean方法创建的bean或使用@Import加载的bean）
+
+      如果您的类具有多个构造函数，则还可以直接在应绑定的构造函数上使用`@ConstructorBinding`。
+
+      **使用 @ConfiguartionProperties-xxx 注解 **
+
+      Spring Boot提供了绑定`@ConfigurationProperties`类型并将其注册为Bean的基础架构。 您可以逐类启用配置属性，也可以启用与组件扫描类似的方式进行配置属性扫描。
+
+      有时，用`@ConfigurationProperties`注释的类可能不适合扫描，例如，如果您正在开发自己的自动配置，或者想要有条件地启用它们。 在这些情况下，请使用`@EnableConfigurationProperties`批注指定要处理的类型列表。
+
+      可以在任何`@Configuration`类上完成此操作，如以下示例所示：
+
+      ```java
+      @Configuration(proxyBeanMethods = false)
+      @EnableConfigurationProperties(AcmeProperties.class)
+      public class MyConfiguration {
+      }
+      ```
+
+      要使用配置属性扫描，请将`@ConfigurationPropertiesScan`批注添加到您的应用程序。 通常，它被添加到以`@SpringBootApplication`注释的主应用程序类中，但是可以将其添加到任何@Configuration类中。
+
+      默认情况下，将从声明注释的类的包中进行扫描。 如果要定义要扫描的特定程序包，可以按照以下示例所示进行操作：
+
+      ```java
+      @SpringBootApplication
+      @ConfigurationPropertiesScan({ "com.example.app", "org.acme.another" })
+      public class MyApplication {
+      }
+      ```
+
+      使用配置属性扫描或通过`@EnableConfigurationProperties`注册`@ConfigurationProperties` Bean时，该Bean具有常规名称：<prefix>-<fqn>，其中<prefix>是`@ConfigurationProperties`注解和<fqn>中指定的环境键前缀。 是Bean的完全限定名称。 如果注释不提供任何前缀，则仅使用Bean的完全限定名称。
+
+      上面例子中的 bean 的名称为 com.example.AcmeProperties
+      我们建议`@ConfigurationProperties`仅处理环境，尤其不要从上下文中注入其他bean。 对于极端情况，可以使用setter注入或框架提供的任何* Aware接口（例如，需要访问`Environment` 是可以使用 `EnvironmentAware`）。如果仍要使用构造函数注入其他bean，则必须使用`@Component`注释配置属性bean，并使用基于JavaBean的属性绑定。
+
+      **使用 @ConfigurationProperties 注解类型**
+
+      这种配置样式与SpringApplication外部YAML配置特别有效，如以下示例所示：
+
+      ```yaml
+      # application.yml
+      
+      acme:
+          remoteAddress: 192.168.1.1
+          security:
+              username: admin
+              roles:
+                - USER
+                - ADMIN
+      
+      # additional configuration as required
+      ```
+
+      要使用`@ConfigurationProperties` Bean，可以像其他任何Bean一样注入它们，如以下示例所示：
+
+      ```java
+      @Service
+      public class MyService {
+      
+          private final AcmeProperties properties;
+      
+          @Autowired
+          public MyService(AcmeProperties properties) {
+              this.properties = properties;
+          }
+      
+          //...
+      
+          @PostConstruct
+          public void openConnection() {
+              Server server = new Server(this.properties.getRemoteAddress());
+              // ...
+          }
+      
+      }
+      ```
+
+      **第三方配置**
+
+      除了使用`@ConfigurationProperties`注释类外，还可以在公共`@Bean`方法上使用它。 当您要将属性绑定到控件之外的第三方组件时，这样做特别有用。
+
+      要从`Environment`属性配置Bean，请将`@ConfigurationProperties`添加到其Bean注册中，如以下示例所示：
+
+      ```java
+      @ConfigurationProperties(prefix = "another")
+      @Bean
+      public AnotherComponent anotherComponent() {
+          ...
+      }
+      ```
+
+      用`another`前缀定义的任何JavaBean属性都以类似于前面的`AcmeProperties`示例的方式映射到该`AnotherComponent` bean。
+
+      **松绑定**
+      Spring Boot使用一些宽松的规则将`Environment`属性绑定到`@ConfigurationProperties` bean，因此环境属性名称和bean属性名称之间不需要完全匹配。有用的常见示例包括破折号分隔的环境属性（例如，`context-path` 绑定到`contextPath`）和大写的环境属性（例如PORT绑定到 port）。
+
+      例如，考虑以下`@ConfigurationProperties`类：
+
+      ```java
+      @ConfigurationProperties(prefix="acme.my-project.person")
+      public class OwnerProperties {
+      
+          private String firstName;
+      
+          public String getFirstName() {
+              return this.firstName;
+          }
+      
+          public void setFirstName(String firstName) {
+              this.firstName = firstName;
+          }
+      
+      }
+      ```
+
+      下面属性名均可使用：
+
+      Table5 松绑定
+
+      | 属性                              | 备注                                   |
+      | --------------------------------- | -------------------------------------- |
+      | acme.my-project.person.first-name | 推荐使用，.yml 和 .properties 中均可   |
+      | acme.myProject.person.firstName   | 标准驼峰格式                           |
+      | acme.my_project.person.first_name | 下划线格式，.yml 和 .properties 中均可 |
+      | ACME_MYPROJECT_PERSON_FIRSTNAME   | 大写，系统环境变量中推荐               |
+
+      注释的前缀值必须为kebab（小写，并用-分隔，例如acme.my-project.person）。
+
+      Table6 每种属性文件的松绑定规则
+
+      | 属性源     | 基本类型            | 列表                               |
+      | ---------- | ------------------- | ---------------------------------- |
+      | Properties | 驼峰、Kebab、下划线 | [] 或者 逗号隔开                   |
+      | YAML       | 驼峰、Kebab、下划线 | [] 或者 逗号隔开                   |
+      | 环境变量   | 下划线间隔的大写    | MY_ACME_1_OTHER = my.acme[1].other |
+      | 系统变量   | 驼峰、Kebab、下划线 | [] 或者 逗号隔开                   |
+
+      推荐使用 kebab 格式，如 `my.property-name=acme`
+
+      绑定到Map属性时，如果键包含小写字母、数字字符或-以外的任何其他字符，则需要使用方括号表示法，以便保留原始值。如果键没有被[]包围，则所有非字母数字或-的字符都将被删除。 例如，考虑将以下属性绑定到Map：
+
+      ```yaml
+      acme:
+        map:
+          "[/key1]": value1
+          "[/key2]": value2
+          /key3: value3 # / 将被丢弃
+      ```
+
+      上面的属性将以/ key1，/ key2和key3作为 map 中的键绑定到Map。
+      对于YAML文件，方括号必须用引号引起来，以便正确解析 key。
+      **合并复杂类型**
+
+      如果在多个位置配置了列表，则通过替换整个列表来进行覆盖。
+
+      例如，假设MyPojo对象的 `name` 和 `description` 属性默认为空。 下面的示例在 `AcmeProperties` 暴露一个 MyPojo对象的列表：
 
 
 
